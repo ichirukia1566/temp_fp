@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -7,6 +8,7 @@
 #include "util.hpp"
 #include "mesh.hpp"
 #include "particle.h"
+#define PI 3.14159265
 using namespace std;
 using namespace glm;
 
@@ -133,6 +135,7 @@ void initOpenGL() {
 	// Compile and link shader program
 	vector<GLuint> shaders;
 	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v.glsl"));
+	shaders.push_back(compileShader(GL_GEOMETRY_SHADER, "sh_g.glsl"));
 	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
 	shader = linkProgram(shaders);
 	// Release shader sources
@@ -147,8 +150,9 @@ void initOpenGL() {
 }
 
 void initTriangle() {
-	Particle* particle1 = new Particle(100000, vec3(0.0f, 0.289f, 0.0f), 1.0f, 0.0f, vec3(1.0f, 0.0f, 0.0f));
-	Particle* particle2 = new Particle(200000, vec3(5.0f, 5.0f, 0.0f), 2.0f, 0.0f, vec3(0.0f, 1.0f, 0.0f));
+	
+	//Particle* particle1 = new Particle(1000000, vec3(0.0f, 0.289f, 0.0f), 1.0f, 0.0f, vec3(1.0f, 0.0f, 0.0f));
+	//Particle* particle2 = new Particle(2000000, vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f * PI, vec3(0.0f, 1.0f, 0.0f));
 	// Create a colored triangle
 	/*
 	struct vert {
@@ -159,9 +163,30 @@ void initTriangle() {
 		int lifetime;
 		float size;
 	};*/
-	vector<vert> verts = { (particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
-						   (particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
+	vector<vert> verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
+						   //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
 							};
+	std::random_device rd;
+	
+
+	for (int i = 0; i < 100000; i++)
+	{
+		std::mt19937 eng(rd());
+		std::uniform_real_distribution<> distr(0, 1);
+		float rand_lifetime = distr(eng);
+		float rand_center1 = distr(eng);
+		float rand_center2 = distr(eng);
+		float rand_center3 = distr(eng);
+		float rand_size = distr(eng);
+		float rand_rotation = PI * distr(eng);
+		float rand_color1 = distr(eng);
+		float rand_color2 = distr(eng);
+		float rand_color3 = distr(eng);
+		Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), rand_size, rand_rotation, vec3(1.0f, 1.0f, 1.0f));
+		verts.push_back((rand_particle->particle2vert())[0]);
+		verts.push_back((rand_particle->particle2vert())[1]);
+		verts.push_back((rand_particle->particle2vert())[2]);
+	}
 	vcount = verts.size();
 
 	// Create vertex array object

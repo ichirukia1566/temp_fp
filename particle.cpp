@@ -10,16 +10,24 @@ Particle::Particle(int l, vec3 c, float s, float r, vec3 col)
 	size = s;
 	rotation = r;
 	color = col;
+	mat4 temp_translation = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+								0.0f, 1.0f, 0.0f, 0.0f,
+								0.0f, 0.0f, 1.0f, 0.0f,
+								-c.x, -c.y, -c.z, 1.0f);
+	mat4 temp_translation_inv = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+									0.0f, 1.0f, 0.0f, 0.0f,
+									0.0f, 0.0f, 1.0f, 0.0f,
+									c.x, c.y, c.z, 1.0f);
 	mat4 temp_rotation = mat4(cos(r), 0.0f, -sin(r), 0.0f,
 							  0.0f, 1.0f, 0.0f, 0.0f,
 							  sin(r), 0.0f, cos(r), 0.0f,
 							  0.0f, 0.0f, 0.0f, 1.0f);
 	vertices[0] = c + vec3(0.0f, sqrt(3) * s / 3.0f, 0.0f);
-	vertices[1] = vec3(temp_rotation * vec4(c + vec3(-s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
-	vertices[2] = vec3(temp_rotation * vec4(c + vec3(s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
-	norm[0] = normalize(vec3(temp_rotation * vec4(vertices[0].x, vertices[0].y, 1.0f, 0.0f)));
-	norm[1] = normalize(vec3(temp_rotation * vec4(vertices[1].x, vertices[1].y, 1.0f, 0.0f)));
-	norm[2] = normalize(vec3(temp_rotation * vec4(vertices[2].x, vertices[2].y, 1.0f, 0.0f)));
+	vertices[1] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(-s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
+	vertices[2] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
+	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
 }
 
 vec3* Particle::getVertices()
@@ -59,15 +67,13 @@ vec3 Particle::getCenter()
 
 void Particle::setCenter(vec3 newCenter)
 {
-	mat4 temp_rotation = mat4(cos(rotation), 0.0f, -sin(rotation), 0.0f,
-							  0.0f, 1.0f, 0.0f, 0.0f,
-							  sin(rotation), 0.0f, cos(rotation), 0.0f,
-							  0.0f, 0.0f, 0.0f, 1.0f);
 	for (int i = 0; i < 3; i++)
 	{
 		vertices[i] += (newCenter - center);
-		norm[i] = normalize(vec3(temp_rotation * vec4(vertices[i].x, vertices[i].y, 1.0f, 0.0f)));
 	}
+	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
 	center = newCenter;
 }
 void Particle::setSize(float newSize)
@@ -80,22 +86,34 @@ void Particle::setSize(float newSize)
 	for (int i = 0; i < 3; i++)
 	{
 		vertices[i] = vertices[i] + (scale - 1.0f) * (vertices[i] - center);
-		norm[i] = normalize(vec3(temp_rotation * vec4(vertices[i].x, vertices[i].y, 1.0f, 0.0f)));
 	}
+	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
 	size = newSize;
 }
 void Particle::setRotation(float newRotation)
 {
 	float diff = newRotation - rotation;
+	mat4 temp_translation = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		-center.x, -center.y, -center.z, 1.0f);
+	mat4 temp_translation_inv = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		center.x, center.y, center.z, 1.0f);
 	mat4 temp_rotation = mat4(cos(diff), 0.0f, -sin(diff), 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		sin(diff), 0.0f, cos(diff), 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f);
 	for (int i = 0; i < 3; i++)
 	{
-		vertices[i] = vec3(temp_rotation * vec4(vertices[i], 1.0f));
-		norm[i] = normalize(temp_rotation * vec4(norm[i], 0.0f));
+		vertices[i] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(vertices[i], 1.0f));
 	}
+	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
 	rotation = newRotation;
 }
 void Particle::setColor(vec3 newColor)
@@ -106,12 +124,12 @@ void Particle::setLifetime(int newLifetime)
 {
 	lifetime = newLifetime;
 }
-vert* Particle::particle2vert(Particle* p)
+vert* Particle::particle2vert()
 {
 	vert verts[3] = {
-						{ (p->getVertices())[0], (p->getNorm())[0], p->getCenter(), p->getColor(), p->getLifetime(), p->getSize() },
-						{ (p->getVertices())[1], (p->getNorm())[1], p->getCenter(), p->getColor(), p->getLifetime(), p->getSize() },
-						{ (p->getVertices())[2], (p->getNorm())[2], p->getCenter(), p->getColor(), p->getLifetime(), p->getSize() }					
+						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() },
+						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() },
+						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() }					
 					};
 	return verts;
 }

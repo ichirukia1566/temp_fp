@@ -36,7 +36,7 @@ public:
 	void setRotation(float newRotation);
 	void setColor(vec3 newColor);
 	void setLifetime(int newLifetime);
-	vert* particle2vert(Particle p);
+	vert* particle2vert();
 protected:
 private:
 	int lifetime;
