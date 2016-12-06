@@ -1,0 +1,10 @@
+﻿  gl_core_3_3.c
+  util.cpp
+  mesh.cpp
+c:\users\may5\class\cs535\2016\base_freeglut\mesh.cpp(74): warning C4018: '<': signed/unsigned mismatch
+c:\users\may5\class\cs535\2016\base_freeglut\mesh.cpp(98): warning C4018: '<': signed/unsigned mismatch
+c:\users\may5\class\cs535\2016\base_freeglut\mesh.cpp(148): warning C4018: '<': signed/unsigned mismatch
+  main.cpp
+  Generating Code...
+  base_freeglut.vcxproj -> C:\Users\may5\Class\CS535\2016\base_freeglut\Debug\base_freeglut.exe
+  base_freeglut.vcxproj -> C:\Users\may5\Class\CS535\2016\base_freeglut\Debug\base_freeglut.pdb (Full PDB)

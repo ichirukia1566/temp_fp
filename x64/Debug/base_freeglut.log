@@ -1,0 +1,11 @@
+﻿  gl_core_3_3.c
+  util.cpp
+c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+  mesh.cpp
+c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  main.cpp
+c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\main.cpp(160): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+  Generating Code...
+  base_freeglut.vcxproj -> C:\Users\Zhe Jiang\Documents\Courses\CS535_CG\temp_fp\x64\Debug\base_freeglut.exe

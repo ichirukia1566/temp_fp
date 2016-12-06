@@ -1,0 +1,14 @@
+﻿  gl_core_3_3.c
+  main.cpp
+main.cpp(170): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+  mesh.cpp
+mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  particle.cpp
+  util.cpp
+util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+  Generating code
+  All 1072 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  base_freeglut.vcxproj -> C:\Users\Zhe Jiang\Documents\Courses\CS535_CG\temp_fp\x64\Release\base_freeglut.exe
