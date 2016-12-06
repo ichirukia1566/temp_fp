@@ -385,8 +385,8 @@ void idle() {
 	}
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
-	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
+	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), verts.data(), GL_STATIC_DRAW);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
 
 
 	glBindVertexArray(0);

@@ -29,7 +29,8 @@ mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int',
   util.cpp
 util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
   Generating code
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\particle.cpp(134): warning C4172: returning address of local variable or temporary: verts
-  All 1119 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+w:\cs.data\temp_fp\particle.cpp(134): warning C4172: returning address of local variable or temporary: verts
+  All 1112 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  base_freeglut.vcxproj -> C:\Users\Zhe Jiang\Documents\Courses\CS535_CG\temp_fp\x64\Release\base_freeglut.exe
+  base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.exe
+  base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.pdb (Full PDB)
