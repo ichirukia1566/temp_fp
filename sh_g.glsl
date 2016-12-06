@@ -14,7 +14,7 @@ smooth out vec3 fragCol;
 
 void main()
 {
-	if (geoT[0] < geoLifetime[0])
+	if (geoLifetime[0] >= 0)
 	{
 		gl_Position = gl_in[0].gl_Position;
 		fragNorm = geoNorm[0];

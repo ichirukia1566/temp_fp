@@ -1,7 +1,5 @@
 ﻿  gl_core_3_3.c
   main.cpp
-main.cpp(176): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(177): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(178): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(179): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(180): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
@@ -9,8 +7,20 @@ main.cpp(181): warning C4244: 'initializing': conversion from 'double' to 'float
 main.cpp(182): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(183): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(184): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(185): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-main.cpp(190): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+main.cpp(185): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(186): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(187): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+main.cpp(192): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+main.cpp(361): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(362): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(363): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(364): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(365): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(366): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(367): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(368): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(369): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(370): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   mesh.cpp
 mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
 mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
@@ -20,6 +30,6 @@ mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int',
 util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
   Generating code
 c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\particle.cpp(134): warning C4172: returning address of local variable or temporary: verts
-  All 1099 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 1119 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   base_freeglut.vcxproj -> C:\Users\Zhe Jiang\Documents\Courses\CS535_CG\temp_fp\x64\Release\base_freeglut.exe

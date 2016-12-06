@@ -6,6 +6,7 @@ layout(location = 2) in vec3 center;
 layout(location = 3) in vec3 color;
 layout(location = 4) in int lifetime;
 layout(location = 5) in float size;
+layout(location = 6) in int maxLifetime;
 
 
 smooth out vec3 geoNorm;	// Model-space interpolated normal
@@ -21,6 +22,7 @@ uniform int t;
 
 
 void main() {
+	int _t = ((maxLifetime - lifetime) > 0 ) ? (maxLifetime - lifetime) : 0;
 	// Transform vertex position
 	
 	mat4 translate = mat4(1.0f, 0.0f, 0.0f, 0.0f,
@@ -34,7 +36,7 @@ void main() {
 	mat4 move = mat4(1.0f, 0.0f, 0.0f, 0.0f,
 					 0.0f, 1.0f, 0.0f, 0.0f,
 					 0.0f, 0.0f, 1.0f, 0.0f,
-					 speed, 0.0f, 0.0f, 1.0f);
+					 0.001f * float(t) * norm.x, 0.001f * float(t) * norm.y, 0.001f * float(t) * norm.z, 1.0f);
 	mat4 rotation = mat4(-1.0f, 0.0f, 0.0f, 0.0f,
 						 0.0f, -1.0f, 0.0f, 0.0f,
 						 0.0f, 0.0f, 1.0f, 0.0f,

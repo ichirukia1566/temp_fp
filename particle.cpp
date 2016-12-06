@@ -127,9 +127,9 @@ void Particle::setLifetime(int newLifetime)
 vert* Particle::particle2vert()
 {
 	vert verts[3] = {
-						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() },
-						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() },
-						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize() }					
+						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() },
+						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() },
+						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() }					
 					};
 	return verts;
 }

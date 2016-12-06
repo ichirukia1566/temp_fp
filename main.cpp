@@ -33,6 +33,8 @@ vec2 mouseOrigin;		// Original mouse coordinates upon clicking
 int flip; // the variable that determines which triangle of the "new particle" is rendered
 float speed;
 int t; // time
+vector<vert> verts;
+int lastNewIndex;
 
 // Constants
 const int MENU_VIEWMODE = 0;		// Toggle view mode
@@ -93,7 +95,7 @@ void initState() {
 	mesh = NULL;
 	flip = 0;
 	speed = 0.0f;
-
+	lastNewIndex = 0;
 	camCoords = vec3(0.0, 0.0, 1.0);
 	camRot = false;
 }
@@ -151,8 +153,8 @@ void initOpenGL() {
 
 void initTriangle() {
 	
-	//Particle* particle1 = new Particle(1000000, vec3(0.0f, 0.289f, 0.0f), 1.0f, 0.0f, vec3(1.0f, 0.0f, 0.0f));
-	//Particle* particle2 = new Particle(2000000, vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f * PI, vec3(0.0f, 1.0f, 0.0f));
+	//Particle* particle1 = new Particle(10000, vec3(0.0f, 0.289f, 0.0f), 1.0f, 0.0f, vec3(1.0f, 0.0f, 0.0f));
+	//Particle* particle2 = new Particle(20000, vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.0f, vec3(0.0f, 1.0f, 0.0f));
 	// Create a colored triangle
 	/*
 	struct vert {
@@ -163,8 +165,8 @@ void initTriangle() {
 		int lifetime;
 		float size;
 	};*/
-	vector<vert> verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
-						   //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
+	verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
+						  //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
 							};
 	std::random_device rd;
 	
@@ -210,6 +212,8 @@ void initTriangle() {
 	glVertexAttribIPointer(4, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3)));
 	glEnableVertexAttribArray(5);
 	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int)));
+	glEnableVertexAttribArray(6);
+	glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int) + sizeof(float)));
 	
 
 	glBindVertexArray(0);
@@ -341,8 +345,56 @@ void idle() {
 	{
 		flip = 0;
 	}
+	//vector<vert> temp;
+
+	//int index;
+	for (int i = lastNewIndex; i < verts.size(); i++)
+	{
+		verts[i].lifetime--;
+		if (verts[i].lifetime < 0)
+		{
+
+			//index = i;
+			std::random_device rd;
+			std::mt19937 eng(rd());
+			std::uniform_real_distribution<> distr(0, 1);
+			float rand_lifetime = distr(eng);
+			float rand_center1 = distr(eng);
+			float rand_center2 = distr(eng);
+			float rand_center3 = distr(eng);
+			float rand_size = distr(eng);
+			float rand_rotation = PI * distr(eng);
+			float rand_color1 = distr(eng);
+			float rand_color2 = distr(eng);
+			float rand_color3 = distr(eng);
+			Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), rand_size, rand_rotation, vec3(1.0f, 1.0f, 1.0f));
+			verts[i] = (rand_particle->particle2vert())[0];
+			verts[i + 1] = (rand_particle->particle2vert())[1];
+			verts[i + 2] = (rand_particle->particle2vert())[2];
+			//temp.push_back((rand_particle->particle2vert())[0]);
+			//temp.push_back((rand_particle->particle2vert())[1]);
+			//temp.push_back((rand_particle->particle2vert())[2]);
+			lastNewIndex = i + 3;
+			if (lastNewIndex >= verts.size())
+			{
+				lastNewIndex = 0;
+			}
+			break;
+		}
+
+	}
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
+	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
+
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	speed += 0.0001f;
 	t += 1;
+	
 	glutPostRedisplay();
 }
 

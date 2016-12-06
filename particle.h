@@ -18,7 +18,7 @@ struct vert {
 		vec3 color;
 		int lifetime;
 		float size;
-		
+		int maxLifetime;
 	};
 
 class Particle {
