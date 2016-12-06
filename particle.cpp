@@ -124,12 +124,12 @@ void Particle::setLifetime(int newLifetime)
 {
 	lifetime = newLifetime;
 }
-vert* Particle::particle2vert()
+vert* Particle::particle2vert(vec3 curl)
 {
 	vert verts[3] = {
-						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() },
-						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() },
-						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime() }					
+						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl },
+						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl },
+						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl }					
 					};
 	return verts;
 }

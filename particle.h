@@ -19,6 +19,7 @@ struct vert {
 		int lifetime;
 		float size;
 		int maxLifetime;
+		vec3 curl;
 	};
 
 class Particle {
@@ -36,7 +37,7 @@ public:
 	void setRotation(float newRotation);
 	void setColor(vec3 newColor);
 	void setLifetime(int newLifetime);
-	vert* particle2vert();
+	vert* particle2vert(vec3 curl);
 protected:
 private:
 	int lifetime;

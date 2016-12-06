@@ -161,12 +161,14 @@
     <ClCompile Include="gl_core_3_3.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="Noise.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_core_3_3.h" />
     <ClInclude Include="mesh.hpp" />
+    <ClInclude Include="Noise.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="util.hpp" />
   </ItemGroup>
