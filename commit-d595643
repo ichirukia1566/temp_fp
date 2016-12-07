@@ -1,0 +1,701 @@
+From d595643e56e8da72aed33d0c2f2b38b3bb27c75f Mon Sep 17 00:00:00 2001
+From: Jiang <jiang479@purdue.lcl>
+Date: Wed, 7 Dec 2016 09:44:32 -0500
+Subject: rewrite try
+
+
+diff --git a/.vs/base_freeglut/v14/.suo b/.vs/base_freeglut/v14/.suo
+index e0ebd15..320e682 100644
+Binary files a/.vs/base_freeglut/v14/.suo and b/.vs/base_freeglut/v14/.suo differ
+diff --git a/base_freeglut.VC.db b/base_freeglut.VC.db
+index acb55cb..77839f6 100644
+Binary files a/base_freeglut.VC.db and b/base_freeglut.VC.db differ
+diff --git a/main.cpp b/main.cpp
+index a71b8a6..f3a2297 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -16,6 +16,8 @@ using namespace glm;
+ GLint width, height;
+ unsigned int viewmode;	// View triangle or obj file
+ GLuint shader;			// Shader program
++GLuint program_update;  // update shader
++GLuint program_render;  // render shader
+ GLuint uniXform;		// Shader location of xform mtx
+ GLuint uniFlip;
+ GLuint uniSpeed;
+@@ -319,6 +321,17 @@ void initGLUT(int* argc, char** argv) {
+ }
+ 
+ void initOpenGL() {
++	const char* sVaryings[7] =
++	{
++		"vCenterOut",
++		"vColorOut",
++		"vVelocityOut",
++		"vCurlOut",
++		"fSizeOut",
++		"fLifeTimeOut",
++		"iTypeOut",
++	};
++
+ 	// Set clear color and depth
+ 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+ 	glClearDepth(1.0f);
+@@ -329,17 +342,21 @@ void initOpenGL() {
+ 	vector<GLuint> shaders;
+ 	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v.glsl"));
+ 	shaders.push_back(compileShader(GL_GEOMETRY_SHADER, "sh_g.glsl"));
+-	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
+-	shader = linkProgram(shaders);
++	//shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
++	program_update = glCreateProgram();
++	// Attach the shaders and link the program
++	for (auto it = shaders.begin(); it != shaders.end(); ++it)
++		glAttachShader(program_update, *it);
++	for (int i = 0; i < 7; i++) 
++		glTransformFeedbackVaryings(program_update, 7, sVaryings, GL_INTERLEAVED_ATTRIBS);
++	glLinkProgram(program_update);
+ 	// Release shader sources
+ 	for (auto s = shaders.begin(); s != shaders.end(); ++s)
+ 		glDeleteShader(*s);
+ 	shaders.clear();
+-	// Locate uniforms
+-	uniXform = glGetUniformLocation(shader, "xform");
+-	uniFlip = glGetUniformLocation(shader, "flip");
+-	uniSpeed = glGetUniformLocation(shader, "speed");
+-	uniT = glGetUniformLocation(shader, "t");
++	
++
++
+ }
+ 
+ void initTriangle() {
+@@ -349,12 +366,13 @@ void initTriangle() {
+ 	// Create a colored triangle
+ 	/*
+ 	struct vert {
+-		vec3 pos;	// Vertex position
+-		vec3 norm;	// Vertex normal
+ 		vec3 center;
+ 		vec3 color;
+-		int lifetime;
++		vec3 velocity;
++		vec3 curl;
+ 		float size;
++		float lifetime;
++		int type;
+ 	};*/
+ 	verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
+ 						  //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
+@@ -371,16 +389,20 @@ void initTriangle() {
+ 		float rand_center2 = distr(eng);
+ 		float rand_center3 = distr(eng);
+ 		float rand_size = distr(eng);
+-		float rand_rotation = PI * distr(eng);
++		//float rand_rotation = PI * distr(eng);
+ 		float rand_color1 = distr(eng);
+ 		float rand_color2 = distr(eng);
+ 		float rand_color3 = distr(eng);
+-		Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
++		float rand_velocity1 = distr(eng);
++		float rand_velocity2 = distr(eng);
++		float rand_velocity3 = distr(eng);
++
++		//Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
++		Particle* rand_particle = new Particle(10000.0f * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 
++												1.0f * rand_size, vec3(rand_color1, rand_color2, rand_color3), vec3(rand_velocity1, rand_velocity2, rand_velocity3), 1);
+ 		vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
+ 		//cout << curl.x << ", " << curl.y << ", " << curl.z << endl;
+-		verts.push_back((rand_particle->particle2vert(curl))[0]);
+-		verts.push_back((rand_particle->particle2vert(curl))[1]);
+-		verts.push_back((rand_particle->particle2vert(curl))[2]);
++		verts.push_back(rand_particle->particle2vert(curl));
+ 	}
+ 	vcount = verts.size();
+ 
+@@ -393,22 +415,30 @@ void initTriangle() {
+ 	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
+ 	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), verts.data(), GL_STATIC_DRAW);
+ 	// Specify vertex attributes
++	/*
++	struct vert {
++		vec3 center;
++		vec3 color;
++		vec3 velocity;
++		vec3 curl;
++		float size;
++		float lifetime;
++		int type;
++	};*/
+ 	glEnableVertexAttribArray(0);
+-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), 0); // pos
++	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), 0); // vec3 center
+ 	glEnableVertexAttribArray(1);
+-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)sizeof(vec3)); // norm
++	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)sizeof(vec3)); // vec3 color
+ 	glEnableVertexAttribArray(2);
+-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(2 * sizeof(vec3))); // center
++	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(2 * sizeof(vec3))); // vec3 velocity
+ 	glEnableVertexAttribArray(3); 
+-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(3 * sizeof(vec3))); // color
++	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(3 * sizeof(vec3))); // vec3 curl
+ 	glEnableVertexAttribArray(4);
+-	glVertexAttribIPointer(4, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3)));
++	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3))); // float size
+ 	glEnableVertexAttribArray(5);
+-	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int)));
++	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(float))); // float lifetime
+ 	glEnableVertexAttribArray(6);
+-	glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int) + sizeof(float)));
+-	glEnableVertexAttribArray(7);
+-	glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + 2 * sizeof(int) + sizeof(float)));
++	glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + 2 * sizeof(float))); // int type
+ 	
+ 
+ 	glBindVertexArray(0);
+diff --git a/particle.cpp b/particle.cpp
+index c485a30..dc622b8 100644
+--- a/particle.cpp
++++ b/particle.cpp
+@@ -3,13 +3,14 @@
+ using namespace std;
+ using namespace glm;
+ 
+-Particle::Particle(int l, vec3 c, float s, float r, vec3 col)
++Particle::Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t)
+ {
+ 	lifetime = l;
+ 	center = c;
+ 	size = s;
+-	rotation = r;
++	//rotation = r;
+ 	color = col;
++	/*
+ 	mat4 temp_translation = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+ 								0.0f, 1.0f, 0.0f, 0.0f,
+ 								0.0f, 0.0f, 1.0f, 0.0f,
+@@ -22,30 +23,33 @@ Particle::Particle(int l, vec3 c, float s, float r, vec3 col)
+ 							  0.0f, 1.0f, 0.0f, 0.0f,
+ 							  sin(r), 0.0f, cos(r), 0.0f,
+ 							  0.0f, 0.0f, 0.0f, 1.0f);
+-	vertices[0] = c + vec3(0.0f, sqrt(3) * s / 3.0f, 0.0f);
+-	vertices[1] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(-s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
+-	vertices[2] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
+-	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+-	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+-	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
++							  */
++	//vertices[0] = c + vec3(0.0f, sqrt(3) * s / 3.0f, 0.0f);
++	//vertices[1] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(-s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
++	//vertices[2] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(c + vec3(s * 0.5f, -sqrt(3) * s / 6.0f, 0.0f), 1.0f));
++	//norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
++	//norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
++	//norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
++	velocity = v;
++	type = t;
+ }
+-
++/*
+ vec3* Particle::getVertices()
+ {
+ 	return vertices;
+ }
+-
++*/
+ vec3 Particle::getColor()
+ {
+ 	return color;
+ }
+ 
+-vec3* Particle::getNorm()
+-{
+-	return norm;
+-}
++//vec3* Particle::getNorm()
++//{
++//	return norm;
++//}
+ 
+-int Particle::getLifetime()
++float Particle::getLifetime()
+ {
+ 	return lifetime;
+ }
+@@ -55,30 +59,40 @@ float Particle::getSize()
+ 	return size;
+ }
+ 
+-float Particle::getRotation()
+-{
+-	return rotation;
+-}
++//float Particle::getRotation()
++//{
++//	return rotation;
++//}
+ 
+ vec3 Particle::getCenter()
+ {
+ 	return center;
+ }
+ 
++vec3 Particle::getVelocity()
++{
++	return velocity;
++}
++
++int Particle::getType()
++{
++	return type;
++}
++
+ void Particle::setCenter(vec3 newCenter)
+ {
+-	for (int i = 0; i < 3; i++)
++	/*for (int i = 0; i < 3; i++)
+ 	{
+ 		vertices[i] += (newCenter - center);
+ 	}
+ 	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+ 	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+-	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
++	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));*/
+ 	center = newCenter;
+ }
+ void Particle::setSize(float newSize)
+ {
+-	float scale = newSize / size;
++	/*float scale = newSize / size;
+ 	mat4 temp_rotation = mat4(cos(rotation), 0.0f, -sin(rotation), 0.0f,
+ 							  0.0f, 1.0f, 0.0f, 0.0f,
+ 							  sin(rotation), 0.0f, cos(rotation), 0.0f,
+@@ -89,47 +103,66 @@ void Particle::setSize(float newSize)
+ 	}
+ 	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+ 	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+-	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
++	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));*/
+ 	size = newSize;
+ }
+-void Particle::setRotation(float newRotation)
+-{
+-	float diff = newRotation - rotation;
+-	mat4 temp_translation = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-		0.0f, 1.0f, 0.0f, 0.0f,
+-		0.0f, 0.0f, 1.0f, 0.0f,
+-		-center.x, -center.y, -center.z, 1.0f);
+-	mat4 temp_translation_inv = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-		0.0f, 1.0f, 0.0f, 0.0f,
+-		0.0f, 0.0f, 1.0f, 0.0f,
+-		center.x, center.y, center.z, 1.0f);
+-	mat4 temp_rotation = mat4(cos(diff), 0.0f, -sin(diff), 0.0f,
+-		0.0f, 1.0f, 0.0f, 0.0f,
+-		sin(diff), 0.0f, cos(diff), 0.0f,
+-		0.0f, 0.0f, 0.0f, 1.0f);
+-	for (int i = 0; i < 3; i++)
+-	{
+-		vertices[i] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(vertices[i], 1.0f));
+-	}
+-	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
+-	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
+-	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
+-	rotation = newRotation;
+-}
++//void Particle::setRotation(float newRotation)
++//{
++//	float diff = newRotation - rotation;
++//	mat4 temp_translation = mat4(1.0f, 0.0f, 0.0f, 0.0f,
++//		0.0f, 1.0f, 0.0f, 0.0f,
++//		0.0f, 0.0f, 1.0f, 0.0f,
++//		-center.x, -center.y, -center.z, 1.0f);
++//	mat4 temp_translation_inv = mat4(1.0f, 0.0f, 0.0f, 0.0f,
++//		0.0f, 1.0f, 0.0f, 0.0f,
++//		0.0f, 0.0f, 1.0f, 0.0f,
++//		center.x, center.y, center.z, 1.0f);
++//	mat4 temp_rotation = mat4(cos(diff), 0.0f, -sin(diff), 0.0f,
++//		0.0f, 1.0f, 0.0f, 0.0f,
++//		sin(diff), 0.0f, cos(diff), 0.0f,
++//		0.0f, 0.0f, 0.0f, 1.0f);
++//	for (int i = 0; i < 3; i++)
++//	{
++//		vertices[i] = vec3(temp_translation_inv * temp_rotation * temp_translation * vec4(vertices[i], 1.0f));
++//	}
++//	norm[0] = normalize(cross(vertices[1] - vertices[0], vertices[2] - vertices[0]));
++//	norm[1] = normalize(cross(vertices[2] - vertices[1], vertices[0] - vertices[1]));
++//	norm[2] = normalize(cross(vertices[0] - vertices[2], vertices[1] - vertices[2]));
++//	rotation = newRotation;
++//}
+ void Particle::setColor(vec3 newColor)
+ {
+ 	color = newColor;
+ }
+-void Particle::setLifetime(int newLifetime)
++void Particle::setLifetime(float newLifetime)
+ {
+ 	lifetime = newLifetime;
+ }
+-vert* Particle::particle2vert(vec3 curl)
++
++void Particle::setVelocity(vec3 v)
++{
++	velocity = v;
++}
++
++void Particle::setType(int t)
++{
++	type = t;
++}
++
++/*
++struct vert {
++	vec3 center;
++	vec3 color;
++	vec3 velocity;
++	vec3 curl;
++	float size;
++	float lifetime;
++	int type;
++};
++*/
++
++vert Particle::particle2vert(vec3 curl)
+ {
+-	vert verts[3] = {
+-						{ (this->getVertices())[0], (this->getNorm())[0], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl },
+-						{ (this->getVertices())[1], (this->getNorm())[1], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl },
+-						{ (this->getVertices())[2], (this->getNorm())[2], this->getCenter(), this->getColor(), this->getLifetime(), this->getSize(), this->getLifetime(), curl }					
+-					};
+-	return verts;
++	vert vert = { this->getCenter(), this->getColor(), this->getVelocity(), curl, this->getSize(), this->getType() };
++	return vert;
+ }
+\ No newline at end of file
+diff --git a/particle.h b/particle.h
+index 8ef8c4a..ba3e443 100644
+--- a/particle.h
++++ b/particle.h
+@@ -12,39 +12,44 @@ using namespace std;
+ using namespace glm;
+ 
+ struct vert {
+-		vec3 pos;	// Vertex position
+-		vec3 norm;	// Vertex normal
+ 		vec3 center;
+ 		vec3 color;
+-		int lifetime;
+-		float size;
+-		int maxLifetime;
++		vec3 velocity;
+ 		vec3 curl;
++		float size;
++		float lifetime;
++		int type;
+ 	};
+ 
+ class Particle {
+ public:
+-	Particle(int l, vec3 c, float s, float r, vec3 col);
+-	vec3* getVertices();
++	Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
++	//vec3* getVertices();
+ 	vec3 getColor();
+-	vec3* getNorm();
+-	int getLifetime();
++	//vec3* getNorm();
++	float getLifetime();
+ 	float getSize();
+-	float getRotation();
++	//float getRotation();
+ 	vec3 getCenter();
++	vec3 getVelocity();
++	int getType();
+ 	void setCenter(vec3 newCenter);
+ 	void setSize(float newSize);
+-	void setRotation(float newRotation);
++	//void setRotation(float newRotation);
+ 	void setColor(vec3 newColor);
+-	void setLifetime(int newLifetime);
+-	vert* particle2vert(vec3 curl);
++	void setLifetime(float newLifetime);
++	void setVelocity(vec3 v);
++	void setType(int t);
++	vert particle2vert(vec3 curl);
+ protected:
+ private:
+-	int lifetime;
++	float lifetime;
+ 	vec3 center; // center of triangle
+ 	float size; // length of edge
+-	float rotation; // rotation around y axis, clockwise
+-	vec3 vertices[3]; 
++	//float rotation; // rotation around y axis, clockwise
++	//vec3 vertices[3]; 
+ 	vec3 color; 
+-	vec3 norm[3];
++	//vec3 norm[3];
++	vec3 velocity;
++	int type;
+ };
+\ No newline at end of file
+diff --git a/sh_g.glsl b/sh_g.glsl
+index c9c60f0..f891825 100644
+--- a/sh_g.glsl
++++ b/sh_g.glsl
+@@ -1,43 +1,88 @@
+ #version 330
+ 
+-layout(triangles) in;
+-layout(triangle_strip, max_vertices=3) out;
++layout(points) in;
++layout(points, max_vertices = 40) out;
+ 
++// input from vertex shader
++in vec3 vCenterPass[];
++in vec3 vColorPass[];
++in vec3 vVelocityPass[];
++in vec3 vCurlPass[];
++in float fSizePass[];
++in float fLifetimePass[];
++flat in int iTypePass[];
+ 
+-in vec3 geoNorm[];
+-in vec3 geoCol[];
+-flat in int geoLifetime[];
+-flat in int geoT[];
++smooth out vec3 vCenterOut;
++smooth out vec3 vColorOut;
++smooth out vec3 vVelocityOut;
++smooth out vec3 vCurlOut;
++out float fSizeOut;
++out float fLifetimeOut;
++flat out int iTypeOut;
+ 
+-smooth out vec3 fragPos;
+-smooth out vec3 fragNorm;
+-smooth out vec3 fragCol;
++
++uniform vec3 vGenPosition;
++uniform vec3 vGenCurlVector;
++uniform vec3 vGenVelocityMin;
++uniform vec3 vGenVelocityRange;
++
++uniform vec3 vGenColor; 
++uniform float fGenSize; 
++
++uniform float fGenLifeMin, fGenLifeRange; // Life of new particle - from min to (min+range)
++uniform float fTimePassed; // Time passed since last frame
++
++uniform vec3 vRandomSeed; // Seed number for our random number function
++vec3 vLocalSeed; 
++
++uniform int iNumToGenerate; // How many particles will be generated next time, if greater than zero, particles are generated
++
++// This function returns random number from zero to one
++float randZeroOne() 
++{ 
++    uint n = floatBitsToUint(vLocalSeed.y * 214013.0 + vLocalSeed.x * 2531011.0 + vLocalSeed.z * 141251.0); 
++    n = n * (n * n * 15731u + 789221u); 
++    n = (n >> 9u) | 0x3F800000u; 
++  
++    float fRes =  2.0 - uintBitsToFloat(n); 
++    vLocalSeed = vec3(vLocalSeed.x + 147158.0 * fRes, vLocalSeed.y*fRes  + 415161.0 * fRes, vLocalSeed.z + 324154.0*fRes); 
++    return fRes; 
++} 
+ 
+ void main()
+ {
+-	if (geoLifetime[0] >= 0)
+-	{
+-		gl_Position = gl_in[0].gl_Position;
+-		fragPos = (gl_in[0].gl_Position).xyz;
+-		fragNorm = geoNorm[0];
+-		fragCol = geoCol[0];
+-		EmitVertex();
+-
+-		gl_Position = gl_in[1].gl_Position;
+-		fragPos = (gl_in[1].gl_Position).xyz;
+-		fragNorm = geoNorm[1];
+-		fragCol = geoCol[1];
+-		EmitVertex();
+-
+-		gl_Position = gl_in[2].gl_Position;
+-		fragPos = (gl_in[2].gl_Position).xyz;
+-		fragNorm = geoNorm[2];
+-		fragCol = geoCol[2];
+-		EmitVertex();
+-		EndPrimitive();
+-	}
+-	else
+-	{
+-		// do nothing
+-	}
++	vLocalSeed = vRandomSeed;
++
++	vCenterOut = vCenterPass[0];
++	vVelocityOut = vVelocityPass[0]; 
++	if(iTypePass[0] != 0)vPositionOut += vVelocityOut*fTimePassed; 
++	if(iTypePass[0] != 0)vVelocityOut += vGenCurlVector*fTimePassed; 
++
++	vColorOut = vColorPass[0]; 
++	fLifeTimeOut = fLifeTimePass[0]-fTimePassed; 
++	fSizeOut = fSizePass[0]; 
++	iTypeOut = iTypePass[0]; 
++
++	if(iTypeOut == 0) 
++	{ 
++		EmitVertex(); 
++		EndPrimitive(); 
++     
++		for(int i = 0; i < iNumToGenerate; i++) 
++		{ 
++			vCenterOut = vGenPosition; 
++			vVelocityOut = vGenVelocityMin+vec3(vGenVelocityRange.x*randZeroOne(), vGenVelocityRange.y*randZeroOne(), vGenVelocityRange.z*randZeroOne()); 
++			vColorOut = vGenColor; 
++			fLifeTimeOut = fGenLifeMin+fGenLifeRange*randZeroOne(); 
++			fSizeOut = fGenSize; 
++			iTypeOut = 1; 
++			EmitVertex(); 
++			EndPrimitive(); 
++		} 
++	} 
++	else if(fLifeTimeOut > 0.0) 
++	{ 
++		EmitVertex(); 
++		EndPrimitive();  
++	} 
+ }
+\ No newline at end of file
+diff --git a/sh_v.glsl b/sh_v.glsl
+index c0a257b..de1953b 100644
+--- a/sh_v.glsl
++++ b/sh_v.glsl
+@@ -1,104 +1,28 @@
+ #version 330
+ 
+-layout(location = 0) in vec3 pos;		// Model-space position
+-layout(location = 1) in vec3 norm;		// Model-space normal
+-layout(location = 2) in vec3 center;
+-layout(location = 3) in vec3 color;
+-layout(location = 4) in int lifetime;
+-layout(location = 5) in float size;
+-layout(location = 6) in int maxLifetime;
+-layout(location = 7) in vec3 curl;
+-
+-
+-smooth out vec3 geoNorm;	// Model-space interpolated normal
+-smooth out vec3 geoCol;
+-flat out int geoLifetime;
+-flat out int geoT;
+-
+-
+-uniform mat4 xform;			// Model-to-clip space transform
+-uniform int flip;
+-uniform float speed;
+-uniform int t;
+-
+-mat4 invX_move(mat4 m)
+-{
+-	return mat4(m[0][0], m[0][1], m[0][2], m[0][3],
+-				m[1][0], m[1][1], m[1][2], m[1][3],
+-				m[2][0], m[2][1], m[2][2], m[2][3],
+-				-m[3][0], m[3][1], m[3][2], m[3][3]);
+-}
+-mat4 invY_move(mat4 m)
++layout(location = 0) in vec3 center;
++layout(location = 1) in vec3 color;
++layout(location = 2) in vec3 velocity;
++layout(location = 3) in vec3 curl;
++layout(location = 4) in float size;
++layout(location = 5) in float lifetime;
++layout(location = 6) in int type;
++
++smooth out vec3 vCenterPass;
++smooth out vec3 vColorPass;
++smooth out vec3 vVelocityPass;
++smooth out vec3 vCurlPass;
++out float fSizePass;
++out float fLifetimePass;
++flat out int iTypePass;
++
++void main() 
+ {
+-	return mat4(m[0][0], m[0][1], m[0][2], m[0][3],
+-				m[1][0], m[1][1], m[1][2], m[1][3],
+-				m[2][0], m[2][1], m[2][2], m[2][3],
+-				m[3][0], -m[3][1], m[3][2], m[3][3]);
+-}
+-mat4 invZ_move(mat4 m)
+-{
+-	return mat4(m[0][0], m[0][1], m[0][2], m[0][3],
+-				m[1][0], m[1][1], m[1][2], m[1][3],
+-				m[2][0], m[2][1], m[2][2], m[2][3],
+-				m[3][0], m[3][1], -m[3][2], m[3][3]);
+-}
+-
+-mat4 scale_move(mat4 m, float f)
+-{
+-	return mat4(m[0][0], m[0][1], m[0][2], m[0][3],
+-				m[1][0], m[1][1], m[1][2], m[1][3],
+-				m[2][0], m[2][1], m[2][2], m[2][3],
+-				f * m[3][0],  f * m[3][1], f * m[3][2], m[3][3]);
+-}
+-
+-void main() {
+-	int _t = ((maxLifetime - lifetime) > 0 ) ? (maxLifetime - lifetime) : 0;
+-	// Transform vertex position
+-	
+-	mat4 translate = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-						  0.0f, 1.0f, 0.0f, 0.0f,
+-						  0.0f, 0.0f, 1.0f, 0.0f,
+-						  -1.0f * center.x, -1.0f * center.y, -1.0f * center.z, 1.0f);
+-	mat4 translate1 = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-						  0.0f, 1.0f, 0.0f, 0.0f,
+-						  0.0f, 0.0f, 1.0f, 0.0f,
+-						  1.0f * center.x, 1.0f * center.y, 1.0f * center.z, 1.0f);
+-	mat4 move = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-					 0.0f, 1.0f, 0.0f, 0.0f,
+-					 0.0f, 0.0f, 1.0f, 0.0f,
+-					 (color.x + 1.0f * curl.x) * -0.01f * t, (color.y + 1.0f * curl.y) * -0.01f * t, (color.z + 1.0f * curl.z) * -0.01f * t, 1.0f);
+-	//float a = -0.00001f;
+-	//float vy = 0.0f + a * float(t);
+-	mat4 rotation = mat4(-1.0f, 0.0f, 0.0f, 0.0f,
+-						 0.0f, -1.0f, 0.0f, 0.0f,
+-						 0.0f, 0.0f, 1.0f, 0.0f,
+-						 0.0f, 0.0f, 0.0f, 1.0f);
+-	mat4 reflection = mat4(1.0f, 0.0f, 0.0f, 0.0f,
+-						  0.0f, -1.0f, 0.0f, 0.0f,
+-						  0.0f, 0.0f, 1.0f, 0.0f,
+-						  0.0f, 0.0f, 0.0f, 1.0f);
+-	mat4 scale = mat4(0.01f, 0.0f, 0.0f, 0.0f,
+-					  0.0f, 0.01f, 0.0f, 0.0f,
+-					  0.0f, 0.0f, 0.01f, 0.0f,
+-					  0.0f, 0.0f, 0.0f, 1.0f);
+-	vec4 temp = translate1 * scale * translate * vec4(pos, 1.0);
+-	vec4 temp1 = translate1 * scale * reflection * translate * vec4(pos, 1.0);
+-	if (flip == 0)
+-	{
+-		temp = move * temp;
+-		gl_Position = xform * temp;
+-	} 
+-	else
+-	{
+-		temp1 = move * temp1;
+-		gl_Position = xform * temp1;
+-	}
+-	
+-
+-	// Interpolate normals
+-	geoNorm = norm;
+-	geoCol = color;
+-	geoT = t;
+-	geoLifetime = lifetime;
+-
++	vCenterPass = center;
++	vColorPass = color;
++	vVelocityPass = velocity;
++	vCurlPass = curl;
++	fSizePass = size;
++	fLifetimePass = lifetime;
++	iTypePass = type;
+ }
+\ No newline at end of file
