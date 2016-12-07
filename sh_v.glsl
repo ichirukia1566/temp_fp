@@ -66,7 +66,7 @@ void main() {
 	mat4 move = mat4(1.0f, 0.0f, 0.0f, 0.0f,
 					 0.0f, 1.0f, 0.0f, 0.0f,
 					 0.0f, 0.0f, 1.0f, 0.0f,
-					 (color.x + curl.x) * -0.01f * t, (color.y + curl.y) * -0.01f * t, (color.z + curl.z) * -0.01f * t, 1.0f);
+					 (color.x + 1.0f * curl.x) * -0.01f * t, (color.y + 1.0f * curl.y) * -0.01f * t, (color.z + 1.0f * curl.z) * -0.01f * t, 1.0f);
 	//float a = -0.00001f;
 	//float vy = 0.0f + a * float(t);
 	mat4 rotation = mat4(-1.0f, 0.0f, 0.0f, 0.0f,

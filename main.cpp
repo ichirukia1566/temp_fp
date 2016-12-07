@@ -179,9 +179,37 @@ float simplexNoise(float x, float y, float z)
 	return 32.0*(n0 + n1 + n2 + n3);
 }
 
+vec3 simplexNoiseVec3(vec3 x)
+{
+	float s = simplexNoise(x.x, x.y, x.z);
+	float s1 = simplexNoise(x.y - 19.1, x.z + 33.4, x.x + 47.2);
+	float s2 = simplexNoise(x.z + 74.2, x.x - 124.5, x.y + 99.4);
+	vec3 c = vec3(s, s1, s2);
+	return c;
+}
+
 vec3 curlNoise(float x, float y, float z)
 {
-	float eps = 1.0;
+	/*const float e = 0.1f;
+	vec3 dx = vec3(e, 0.0, 0.0);
+	vec3 dy = vec3(0.0, e, 0.0);
+	vec3 dz = vec3(0.0, 0.0, e);
+
+	vec3 p_x0 = simplexNoiseVec3(vec3(x - dx.x, y - dx.y, z - dx.z));
+	vec3 p_x1 = simplexNoiseVec3(vec3(x, y, z) + dx);
+	vec3 p_y0 = simplexNoiseVec3(vec3(x, y, z) - dy);
+	vec3 p_y1 = simplexNoiseVec3(vec3(x, y, z) + dy);
+	vec3 p_z0 = simplexNoiseVec3(vec3(x, y, z) - dz);
+	vec3 p_z1 = simplexNoiseVec3(vec3(x, y, z) + dz);
+
+	float x_1 = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
+	float y_1 = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
+	float z_1 = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
+
+	const float divisor = 1.0 / (2.0 * e);
+	return normalize(vec3(x_1, y_1, z_1) * divisor);*/
+
+	float eps = 0.001f;
 	float n1, n2, a, b;
 	vec3 curl;
 	n1 = simplexNoise(x, y + eps, z);
@@ -259,7 +287,7 @@ void initState() {
 	flip = 0;
 	speed = 0.0f;
 	lastNewIndex = 0;
-	camCoords = vec3(0.0, 0.0, 5.0);
+	camCoords = vec3(0.0, 0.0, 20.0);
 	camRot = false;
 }
 
@@ -334,7 +362,7 @@ void initTriangle() {
 	std::random_device rd;
 	
 
-	for (int i = 0; i < 1200000; i++)
+	for (int i = 0; i < 1000000; i++)
 	{
 		std::mt19937 eng(rd());
 		std::uniform_real_distribution<> distr(0, 1);
@@ -347,8 +375,9 @@ void initTriangle() {
 		float rand_color1 = distr(eng);
 		float rand_color2 = distr(eng);
 		float rand_color3 = distr(eng);
-		Particle* rand_particle = new Particle(100 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), rand_size, rand_rotation, vec3(1.0f, 1.0f, 1.0f));
-		vec3 curl = curlNoise(rand_center1, rand_center2, rand_center3);
+		Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
+		vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
+		//cout << curl.x << ", " << curl.y << ", " << curl.z << endl;
 		verts.push_back((rand_particle->particle2vert(curl))[0]);
 		verts.push_back((rand_particle->particle2vert(curl))[1]);
 		verts.push_back((rand_particle->particle2vert(curl))[2]);
@@ -517,6 +546,15 @@ void idle() {
 	for (int i = lastNewIndex; i < verts.size(); i++)
 	{
 		verts[i].lifetime--;
+		verts[i].curl = curlNoise(simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t, 
+											verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t, 
+											verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t), 
+									simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
+										verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
+										verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t),
+									simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
+										verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
+										verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t));
 		if (verts[i].lifetime < 0)
 		{
 
@@ -533,8 +571,8 @@ void idle() {
 			float rand_color1 = distr(eng);
 			float rand_color2 = distr(eng);
 			float rand_color3 = distr(eng);
-			Particle* rand_particle = new Particle(100 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), rand_size, rand_rotation, vec3(1.0f, 1.0f, 1.0f));
-			vec3 curl = curlNoise(rand_center1, rand_center2, rand_center3);
+			Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
+			vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
 			verts[i] = (rand_particle->particle2vert(curl))[0];
 			verts[i + 1] = (rand_particle->particle2vert(curl))[1];
 			verts[i + 2] = (rand_particle->particle2vert(curl))[2];
@@ -552,7 +590,7 @@ void idle() {
 	}
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
-	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), verts.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), NULL, GL_STATIC_DRAW);
 	//glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
 
 
