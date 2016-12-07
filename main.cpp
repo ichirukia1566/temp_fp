@@ -56,13 +56,13 @@ GLuint uniiNumToGenerate;
 float fElapsedTime = 0.8f;
 float fNextGenerationTime = 0.002f;
 
-vec3 vGenPosition = vec3(-10.0f, 17.5f, 0.0f);
+vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
 vec3 vGenVelocityMin = vec3(-5.0f, 0.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
 vec3 vGenCurlVector = vec3(0.0f, -5.0f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
 float fGenLifeMin = 1.5f, fGenLifeRange = 10000.0f;
-float fGenSize = 0.75f;
+float fGenSize = 0.25f;
 
 int iNumToGenerate = 60;
 mat4 matProjection, matView;
@@ -359,14 +359,14 @@ void initOpenGL() {
 		"vCurlOut",
 		"fSizeOut",
 		"fLifetimeOut",
-		"iTypeOut",
+		"iTypeOut"
 	};
 
-	// Set clear color and depth
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClearDepth(1.0f);
-	// Enable depth testing
-	glEnable(GL_DEPTH_TEST);
+	//// Set clear color and depth
+	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//glClearDepth(1.0f);
+	//// Enable depth testing
+	//glEnable(GL_DEPTH_TEST);
 
 	// Compile and link shader program
 	vector<GLuint> shaders;
@@ -377,7 +377,7 @@ void initOpenGL() {
 	// Attach the shaders and link the program
 	for (auto it = shaders.begin(); it != shaders.end(); ++it)
 		glAttachShader(program_update, *it);
-	for (int i = 0; i < 7; i++) 
+	//for (int i = 0; i < 7; i++) 
 		glTransformFeedbackVaryings(program_update, 7, sVaryings, GL_INTERLEAVED_ATTRIBS);
 	glLinkProgram(program_update);
 	// Release shader sources
@@ -396,7 +396,7 @@ void initOpenGL() {
 	//glGenTransformFeedbacks(1, &uiTransformFeedbackBuffer);
 	glGenBuffers(1, &uiTBO);
 	glBindBuffer(GL_ARRAY_BUFFER, uiTBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vert) * 1000000, nullptr, GL_STATIC_READ);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vert) * 100000, nullptr, GL_STATIC_READ);
 
 	glGenQueries(1, &uiQuery);
 
@@ -404,16 +404,16 @@ void initOpenGL() {
 	glGenVertexArrays(2, uiVAO);
 
 	Particle partInitialization(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
-	Particle partInitialization1(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	//Particle partInitialization1(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
 	partInitialization.setType(0);
 	verts.push_back(partInitialization.particle2vert(vec3(0.0f)));
-	verts.push_back(partInitialization1.particle2vert(vec3(0.0f)));
+	//verts.push_back(partInitialization1.particle2vert(vec3(0.0f)));
 
 	for (int i = 0; i < 2; i++)
 	{
 		glBindVertexArray(uiVAO[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, uiParticleBuffer[i]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vert)* 1000000, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vert)* 100000, NULL, GL_DYNAMIC_DRAW);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vert), verts.data());
 
 		for (int i = 0; i < 7; i++)
@@ -445,6 +445,7 @@ float grandf(float fMin, float fAdd)
 void updateParticles(float fTimePassed)
 {
 	glUseProgram(program_update);
+
 	unifTimePassed = glGetUniformLocation(program_update, "fTimePassed");
 	glUniform1fv(unifTimePassed, 1, &fTimePassed);
 	univGenPosition = glGetUniformLocation(program_update, "vGenPosition");
@@ -496,7 +497,11 @@ void updateParticles(float fTimePassed)
 
 	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
-	cout << iNumParticles << endl;
+	//cout << iNumParticles << endl;
+	//vert feedback[sizeof(vert) * 100000];
+	//glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, sizeof(feedback), feedback);
+	//cout << "lol\n";
+	//printf("%f\n", feedback[0].center);
 	//void * data = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(vert) * 1000000, GL_MAP_READ_BIT);
 	//cout << data;
 	iCurReadBuffer = 1 - iCurReadBuffer;

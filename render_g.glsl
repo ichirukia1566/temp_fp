@@ -29,21 +29,43 @@ void main()
      
     vColorPart = vec4(vColorPass[0], fLifeTimePass[0]); 
         
-    vec3 vPos = vPosOld+vQuad2*fSize*sqrt(3)/3.0f; 
-    //vTexCoord = vec2(0.0, 0.0); 
-    gl_Position = mVP*vec4(vPos, 1.0); 
-    EmitVertex(); 
+	if (flip == 1)
+	{
+		 vec3 vPos = vPosOld+vQuad2*fSize*sqrt(3)/3.0f; 
+		//vTexCoord = vec2(0.0, 0.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
      
-    vPos = vPosOld-vQuad2*fSize*sqrt(3)/6.0f-vQuad1*fSize*0.5f; 
-    //vTexCoord = vec2(0.0, 1.0); 
-    gl_Position = mVP*vec4(vPos, 1.0); 
-    EmitVertex(); 
+		vPos = vPosOld-vQuad2*fSize*sqrt(3)/6.0f-vQuad1*fSize*0.5f; 
+		//vTexCoord = vec2(0.0, 1.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
      
-    vPos = vPosOld-vQuad2*fSize*sqrt(3)/6.0f+vQuad1*fSize*0.5f; 
-    //vTexCoord = vec2(1.0, 0.0); 
-    gl_Position = mVP*vec4(vPos, 1.0); 
-    EmitVertex(); 
+		vPos = vPosOld-vQuad2*fSize*sqrt(3)/6.0f+vQuad1*fSize*0.5f; 
+		//vTexCoord = vec2(1.0, 0.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
        
-    EndPrimitive(); 
+		EndPrimitive(); 
+	}
+	else if (flip == 0)
+	{
+		vec3 vPos = vPosOld-vQuad2*fSize*sqrt(3)/3.0f; 
+		//vTexCoord = vec2(0.0, 0.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
+     
+		vPos = vPosOld+vQuad2*fSize*sqrt(3)/6.0f+vQuad1*fSize*0.5f; 
+		//vTexCoord = vec2(0.0, 1.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
+     
+		vPos = vPosOld+vQuad2*fSize*sqrt(3)/6.0f-vQuad1*fSize*0.5f; 
+		//vTexCoord = vec2(1.0, 0.0); 
+		gl_Position = mVP*vec4(vPos, 1.0); 
+		EmitVertex(); 
+       
+		EndPrimitive(); 
+	}
   } 
 }
