@@ -16,6 +16,8 @@ using namespace glm;
 GLint width, height;
 unsigned int viewmode;	// View triangle or obj file
 GLuint shader;			// Shader program
+GLuint program_update;  // update shader
+GLuint program_render;  // render shader
 GLuint uniXform;		// Shader location of xform mtx
 GLuint uniFlip;
 GLuint uniSpeed;
@@ -319,6 +321,17 @@ void initGLUT(int* argc, char** argv) {
 }
 
 void initOpenGL() {
+	const char* sVaryings[7] =
+	{
+		"vCenterOut",
+		"vColorOut",
+		"vVelocityOut",
+		"vCurlOut",
+		"fSizeOut",
+		"fLifeTimeOut",
+		"iTypeOut",
+	};
+
 	// Set clear color and depth
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClearDepth(1.0f);
@@ -329,17 +342,21 @@ void initOpenGL() {
 	vector<GLuint> shaders;
 	shaders.push_back(compileShader(GL_VERTEX_SHADER, "sh_v.glsl"));
 	shaders.push_back(compileShader(GL_GEOMETRY_SHADER, "sh_g.glsl"));
-	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
-	shader = linkProgram(shaders);
+	//shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "sh_f.glsl"));
+	program_update = glCreateProgram();
+	// Attach the shaders and link the program
+	for (auto it = shaders.begin(); it != shaders.end(); ++it)
+		glAttachShader(program_update, *it);
+	for (int i = 0; i < 7; i++) 
+		glTransformFeedbackVaryings(program_update, 7, sVaryings, GL_INTERLEAVED_ATTRIBS);
+	glLinkProgram(program_update);
 	// Release shader sources
 	for (auto s = shaders.begin(); s != shaders.end(); ++s)
 		glDeleteShader(*s);
 	shaders.clear();
-	// Locate uniforms
-	uniXform = glGetUniformLocation(shader, "xform");
-	uniFlip = glGetUniformLocation(shader, "flip");
-	uniSpeed = glGetUniformLocation(shader, "speed");
-	uniT = glGetUniformLocation(shader, "t");
+	
+
+
 }
 
 void initTriangle() {
@@ -349,12 +366,13 @@ void initTriangle() {
 	// Create a colored triangle
 	/*
 	struct vert {
-		vec3 pos;	// Vertex position
-		vec3 norm;	// Vertex normal
 		vec3 center;
 		vec3 color;
-		int lifetime;
+		vec3 velocity;
+		vec3 curl;
 		float size;
+		float lifetime;
+		int type;
 	};*/
 	verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
 						  //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
@@ -371,16 +389,20 @@ void initTriangle() {
 		float rand_center2 = distr(eng);
 		float rand_center3 = distr(eng);
 		float rand_size = distr(eng);
-		float rand_rotation = PI * distr(eng);
+		//float rand_rotation = PI * distr(eng);
 		float rand_color1 = distr(eng);
 		float rand_color2 = distr(eng);
 		float rand_color3 = distr(eng);
-		Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
+		float rand_velocity1 = distr(eng);
+		float rand_velocity2 = distr(eng);
+		float rand_velocity3 = distr(eng);
+
+		//Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
+		Particle* rand_particle = new Particle(10000.0f * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 
+												1.0f * rand_size, vec3(rand_color1, rand_color2, rand_color3), vec3(rand_velocity1, rand_velocity2, rand_velocity3), 1);
 		vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
 		//cout << curl.x << ", " << curl.y << ", " << curl.z << endl;
-		verts.push_back((rand_particle->particle2vert(curl))[0]);
-		verts.push_back((rand_particle->particle2vert(curl))[1]);
-		verts.push_back((rand_particle->particle2vert(curl))[2]);
+		verts.push_back(rand_particle->particle2vert(curl));
 	}
 	vcount = verts.size();
 
@@ -393,22 +415,30 @@ void initTriangle() {
 	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
 	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), verts.data(), GL_STATIC_DRAW);
 	// Specify vertex attributes
+	/*
+	struct vert {
+		vec3 center;
+		vec3 color;
+		vec3 velocity;
+		vec3 curl;
+		float size;
+		float lifetime;
+		int type;
+	};*/
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), 0); // pos
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), 0); // vec3 center
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)sizeof(vec3)); // norm
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)sizeof(vec3)); // vec3 color
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(2 * sizeof(vec3))); // center
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(2 * sizeof(vec3))); // vec3 velocity
 	glEnableVertexAttribArray(3); 
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(3 * sizeof(vec3))); // color
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(3 * sizeof(vec3))); // vec3 curl
 	glEnableVertexAttribArray(4);
-	glVertexAttribIPointer(4, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3)));
+	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3))); // float size
 	glEnableVertexAttribArray(5);
-	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int)));
+	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(float))); // float lifetime
 	glEnableVertexAttribArray(6);
-	glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(int) + sizeof(float)));
-	glEnableVertexAttribArray(7);
-	glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + 2 * sizeof(int) + sizeof(float)));
+	glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + 2 * sizeof(float))); // int type
 	
 
 	glBindVertexArray(0);

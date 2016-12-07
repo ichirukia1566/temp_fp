@@ -12,39 +12,44 @@ using namespace std;
 using namespace glm;
 
 struct vert {
-		vec3 pos;	// Vertex position
-		vec3 norm;	// Vertex normal
 		vec3 center;
 		vec3 color;
-		int lifetime;
-		float size;
-		int maxLifetime;
+		vec3 velocity;
 		vec3 curl;
+		float size;
+		float lifetime;
+		int type;
 	};
 
 class Particle {
 public:
-	Particle(int l, vec3 c, float s, float r, vec3 col);
-	vec3* getVertices();
+	Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
+	//vec3* getVertices();
 	vec3 getColor();
-	vec3* getNorm();
-	int getLifetime();
+	//vec3* getNorm();
+	float getLifetime();
 	float getSize();
-	float getRotation();
+	//float getRotation();
 	vec3 getCenter();
+	vec3 getVelocity();
+	int getType();
 	void setCenter(vec3 newCenter);
 	void setSize(float newSize);
-	void setRotation(float newRotation);
+	//void setRotation(float newRotation);
 	void setColor(vec3 newColor);
-	void setLifetime(int newLifetime);
-	vert* particle2vert(vec3 curl);
+	void setLifetime(float newLifetime);
+	void setVelocity(vec3 v);
+	void setType(int t);
+	vert particle2vert(vec3 curl);
 protected:
 private:
-	int lifetime;
+	float lifetime;
 	vec3 center; // center of triangle
 	float size; // length of edge
-	float rotation; // rotation around y axis, clockwise
-	vec3 vertices[3]; 
+	//float rotation; // rotation around y axis, clockwise
+	//vec3 vertices[3]; 
 	vec3 color; 
-	vec3 norm[3];
+	//vec3 norm[3];
+	vec3 velocity;
+	int type;
 };
