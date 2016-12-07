@@ -23,6 +23,7 @@ struct vert {
 
 class Particle {
 public:
+	Particle();
 	Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
 	//vec3* getVertices();
 	vec3 getColor();

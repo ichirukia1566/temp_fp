@@ -37,6 +37,36 @@ float speed;
 int t; // time
 vector<vert> verts;
 int lastNewIndex;
+GLuint uiTBO;
+GLuint uiQuery;
+GLuint uiParticleBuffer[2];
+GLuint uiVAO[2];
+int iCurReadBuffer = 0;
+int iNumParticles;
+GLuint unifTimePassed;
+GLuint univGenPosition;
+GLuint univGenVelocityMin;
+GLuint univGenVelocityRange;
+GLuint univGenColor;
+GLuint univGenCurlVector;
+GLuint unifGenLifeMin;
+GLuint unifGenLifeRange;
+GLuint unifGenSize;
+GLuint uniiNumToGenerate;
+float fElapsedTime = 0.8f;
+float fNextGenerationTime = 0.02f;
+
+vec3 vGenPosition = vec3(-10.0f, 17.5f, 0.0f);
+vec3 vGenVelocityMin = vec3(-5.0f, 0.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
+vec3 vGenCurlVector = vec3(0.0f, -5.0f, 0.0f);
+vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
+
+float fGenLifeMin = 1.5f, fGenLifeRange = 1.5f;
+float fGenSize = 0.75f;
+
+int iNumToGenerate = 30;
+mat4 matProjection, matView;
+vec3 vQuad1, vQuad2;
 
 // Constants
 const int MENU_VIEWMODE = 0;		// Toggle view mode
@@ -354,9 +384,147 @@ void initOpenGL() {
 	for (auto s = shaders.begin(); s != shaders.end(); ++s)
 		glDeleteShader(*s);
 	shaders.clear();
+
+	shaders.push_back(compileShader(GL_VERTEX_SHADER, "render_v.glsl"));
+	shaders.push_back(compileShader(GL_GEOMETRY_SHADER, "render_g.glsl"));
+	shaders.push_back(compileShader(GL_FRAGMENT_SHADER, "render_f.glsl"));
+	program_render = linkProgram(shaders);
+	for (auto s = shaders.begin(); s != shaders.end(); ++s)
+		glDeleteShader(*s);
+	shaders.clear();
 	
+	//glGenTransformFeedbacks(1, &uiTransformFeedbackBuffer);
+	glGenBuffers(1, &uiTBO);
+	glBindBuffer(GL_ARRAY_BUFFER, uiTBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vert) * 1000000, nullptr, GL_STATIC_READ);
 
+	glGenQueries(1, &uiQuery);
 
+	glGenBuffers(2, uiParticleBuffer);
+	glGenVertexArrays(2, uiVAO);
+
+	Particle partInitialization(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	partInitialization.setType(0);
+	verts.push_back(partInitialization.particle2vert(vec3(0.0f)));
+
+	for (int i = 0; i < 2; i++)
+	{
+		glBindVertexArray(uiVAO[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, uiParticleBuffer[i]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vert)* 1000000, NULL, GL_DYNAMIC_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vert), verts.data());
+
+		for (int i = 0; i < 7; i++)
+			glEnableVertexAttribArray(i);
+		
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vert), 0); // vec3 center
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)sizeof(vec3)); // vec3 color
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(2 * sizeof(vec3))); // vec3 velocity
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(3 * sizeof(vec3))); // vec3 curl
+		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3))); // float size
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + sizeof(float))); // float lifetime
+		glVertexAttribIPointer(6, 1, GL_INT, sizeof(vert), (GLvoid*)(4 * sizeof(vec3) + 2 * sizeof(float))); // int type
+	}
+	iCurReadBuffer = 0;
+	iNumParticles = 1;
+
+	//bInitialized = true;
+
+	//return true;
+
+}
+
+float grandf(float fMin, float fAdd)
+{
+	float fRandom = float(rand() % (RAND_MAX + 1)) / float(RAND_MAX);
+	return fMin + fAdd * fRandom;
+}
+
+void updateParticles(float fTimePassed)
+{
+	glUseProgram(program_update);
+	unifTimePassed = glGetUniformLocation(program_update, "fTimePassed");
+	glUniform1fv(unifTimePassed, 1, &fTimePassed);
+	univGenPosition = glGetUniformLocation(program_update, "vGenPosition");
+	glUniform3fv(univGenPosition, 1, (GLfloat*)&vGenPosition);
+	univGenVelocityMin = glGetUniformLocation(program_update, "vGenVelocityMin");
+	glUniform3fv(univGenVelocityMin, 1, (GLfloat*)&vGenVelocityMin);
+	univGenVelocityRange = glGetUniformLocation(program_update, "vGenVelocityRange");
+	glUniform3fv(univGenVelocityRange, 1, (GLfloat*)&vGenVelocityRange);
+	univGenColor = glGetUniformLocation(program_update, "vGenColor");
+	glUniform3fv(univGenColor, 1, (GLfloat*)&vGenColor);
+	univGenCurlVector = glGetUniformLocation(program_update, "vGenCurlVector");
+	glUniform3fv(univGenCurlVector, 1, (GLfloat*)&vGenCurlVector);
+	unifGenLifeMin = glGetUniformLocation(program_update, "fGenLifeMin");
+	glUniform1fv(unifGenLifeMin, 1, &fGenLifeMin);
+	unifGenLifeRange = glGetUniformLocation(program_update, "fGenLifeRange");
+	glUniform1fv(unifGenLifeRange, 1, &fGenLifeRange);
+	unifGenSize = glGetUniformLocation(program_update, "fGenSize");
+	glUniform1fv(unifGenSize, 1, &fGenSize);
+	uniiNumToGenerate = glGetUniformLocation(program_update, "iNumToGenerate");
+	glUniform1i(uniiNumToGenerate, 0);
+	
+	fElapsedTime += fTimePassed;
+
+	if(fElapsedTime > fNextGenerationTime)
+	{
+		//spUpdateParticles.SetUniform("iNumToGenerate", iNumToGenerate);
+		uniiNumToGenerate = glGetUniformLocation(program_update, "iNumToGenerate");
+		glUniform1i(uniiNumToGenerate, iNumToGenerate);
+		fElapsedTime -= fNextGenerationTime;
+
+		vec3 vRandomSeed = glm::vec3(grandf(-10.0f, 20.0f), grandf(-10.0f, 20.0f), grandf(-10.0f, 20.0f));
+		glUniform3fv(glGetUniformLocation(program_update, "vRandomSeed"), 1, (GLfloat*)&vRandomSeed);
+	}
+
+	glEnable(GL_RASTERIZER_DISCARD);
+	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, uiTransformFeedbackBuffer);
+
+	glBindVertexArray(uiVAO[iCurReadBuffer]);
+	glEnableVertexAttribArray(1); // Re-enable velocity
+
+	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, uiParticleBuffer[1 - iCurReadBuffer]);
+
+	glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, uiQuery);
+	glBeginTransformFeedback(GL_POINTS);
+
+	glDrawArrays(GL_POINTS, 0, iNumParticles);
+
+	glEndTransformFeedback();
+
+	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
+
+	iCurReadBuffer = 1 - iCurReadBuffer;
+
+	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+}
+
+void renderParticles()
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDepthMask(0);
+
+	glDisable(GL_RASTERIZER_DISCARD);
+	glUseProgram(program_render);
+
+	glUniformMatrix4fv(glGetUniformLocation(program_render, "matrices.mProj"), 1, FALSE, (GLfloat*)&matProjection);
+	glUniformMatrix4fv(glGetUniformLocation(program_render, "matrices.mView"), 1, FALSE, (GLfloat*)&matView);
+	glUniform3fv(glGetUniformLocation(program_render, "vQuad1"), 1, (GLfloat*)&vQuad1);
+	glUniform3fv(glGetUniformLocation(program_render, "vQuad2"), 1, (GLfloat*)&vQuad2);
+	glUniform1i(glGetUniformLocation(program_render, "gSampler"), 0);
+	glUniform1i(glGetUniformLocation(program_render, "flip"), flip);
+
+	glBindVertexArray(uiVAO[iCurReadBuffer]);
+	//void * data = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(vert) * 1000000, GL_MAP_READ_BIT);
+	//cout << data;
+	glDisableVertexAttribArray(2); // Disable velocity, because we don't need it for rendering
+
+	glDrawArrays(GL_POINTS, 0, iNumParticles);
+
+	glDepthMask(1);
+	glDisable(GL_BLEND);
 }
 
 void initTriangle() {
@@ -377,34 +545,34 @@ void initTriangle() {
 	verts = { //(particle1->particle2vert())[0], (particle1->particle2vert())[1], (particle1->particle2vert())[2],
 						  //(particle2->particle2vert())[0], (particle2->particle2vert())[1], (particle2->particle2vert())[2]
 							};
-	std::random_device rd;
-	
+	//std::random_device rd;
+	//
 
-	for (int i = 0; i < 1000000; i++)
-	{
-		std::mt19937 eng(rd());
-		std::uniform_real_distribution<> distr(0, 1);
-		float rand_lifetime = distr(eng);
-		float rand_center1 = distr(eng);
-		float rand_center2 = distr(eng);
-		float rand_center3 = distr(eng);
-		float rand_size = distr(eng);
-		//float rand_rotation = PI * distr(eng);
-		float rand_color1 = distr(eng);
-		float rand_color2 = distr(eng);
-		float rand_color3 = distr(eng);
-		float rand_velocity1 = distr(eng);
-		float rand_velocity2 = distr(eng);
-		float rand_velocity3 = distr(eng);
+	//for (int i = 0; i < 1000000; i++)
+	//{
+	//	std::mt19937 eng(rd());
+	//	std::uniform_real_distribution<> distr(0, 1);
+	//	float rand_lifetime = distr(eng);
+	//	float rand_center1 = distr(eng);
+	//	float rand_center2 = distr(eng);
+	//	float rand_center3 = distr(eng);
+	//	float rand_size = distr(eng);
+	//	//float rand_rotation = PI * distr(eng);
+	//	float rand_color1 = distr(eng);
+	//	float rand_color2 = distr(eng);
+	//	float rand_color3 = distr(eng);
+	//	float rand_velocity1 = distr(eng);
+	//	float rand_velocity2 = distr(eng);
+	//	float rand_velocity3 = distr(eng);
 
-		//Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
-		Particle* rand_particle = new Particle(10000.0f * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 
-												1.0f * rand_size, vec3(rand_color1, rand_color2, rand_color3), vec3(rand_velocity1, rand_velocity2, rand_velocity3), 1);
-		vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
-		//cout << curl.x << ", " << curl.y << ", " << curl.z << endl;
-		verts.push_back(rand_particle->particle2vert(curl));
-	}
-	vcount = verts.size();
+	//	//Particle(float l, vec3 c, float s, vec3 col, vec3 v, int t);
+	//	Particle* rand_particle = new Particle(10000.0f * rand_lifetime, vec3(1.0f * rand_center1, 1.0f * rand_center2, 1.0f * rand_center3), 
+	//											1.0f * rand_size, vec3(rand_color1, rand_color2, rand_color3), vec3(rand_velocity1, rand_velocity2, rand_velocity3), 1);
+	//	vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
+	//	//cout << curl.x << ", " << curl.y << ", " << curl.z << endl;
+	//	verts.push_back(rand_particle->particle2vert(curl));
+	//}
+	//vcount = verts.size();
 
 	// Create vertex array object
 	glGenVertexArrays(1, &vao);
@@ -446,56 +614,75 @@ void initTriangle() {
 }
 
 void display() {
-	try {
-		// Clear the back buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	float aspect = (float)width / (float)height;
+	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
+	//mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
+	matProjection = proj;
+	vec3 vEye = camCoords;
+	vec3 vView = vec3(0.0f, 0.0f,-1.0f);
+	vec3 vUp = vec3(0.0f, 1.0f, 0.0f);
+	matView = lookAt(vEye, vView, vUp);
+	vView = vView - vEye;
+	vView = normalize(vView);
+	vQuad1 = cross(vView, vUp);
+	vQuad1 = normalize(vQuad1);
+	vQuad2 = cross(vView, vQuad1);
+	vQuad2 = normalize(vQuad2);
+	updateParticles(1.0f);
+	renderParticles();
 
-		// Get ready to draw
-		glUseProgram(shader);
 
-		mat4 xform;
-		float aspect = (float)width / (float)height;
-		// Create perspective projection matrix
-		mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
-		// Create view transformation matrix
-		mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
-		mat4 rot = rotate(mat4(), radians(camCoords.y), vec3(1.0, 0.0, 0.0));
-		rot = rotate(rot, radians(camCoords.x), vec3(0.0, 1.0, 0.0));
-		xform = proj * view * rot;
 
-		
+	//try {
+	//	// Clear the back buffer
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		switch (viewmode) {
-		case 0:
-			glBindVertexArray(vao);
-			// Send transformation matrix to shader
-			glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
-			glUniform1i(uniFlip, flip);
-			glUniform1f(uniSpeed, speed);
-			glUniform1i(uniT, t);
-			// Draw the triangle
-			glDrawArrays(GL_TRIANGLES, 0, vcount);
-			glBindVertexArray(0);
-			break;
+	//	// Get ready to draw
+	//	glUseProgram(shader);
 
-		case 1: {
-			// Load model on demand
-			if (!mesh) mesh = new Mesh("models/cow.obj");
+	//	mat4 xform;
+	//	float aspect = (float)width / (float)height;
+	//	// Create perspective projection matrix
+	//	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
+	//	// Create view transformation matrix
+	//	mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
+	//	mat4 rot = rotate(mat4(), radians(camCoords.y), vec3(1.0, 0.0, 0.0));
+	//	rot = rotate(rot, radians(camCoords.x), vec3(0.0, 1.0, 0.0));
+	//	xform = proj * view * rot;
 
-			// Scale and center mesh using bounding box
-			pair<vec3, vec3> meshBB = mesh->boundingBox();
-			mat4 fixBB = scale(mat4(), vec3(1.0f / length(meshBB.second - meshBB.first)));
-			fixBB = glm::translate(fixBB, -(meshBB.first + meshBB.second) / 2.0f);
-			// Concatenate all transformations and upload to shader
-			xform = xform * fixBB;
-			glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
-			glUniform1i(uniFlip, flip);
-			glUniform1f(uniSpeed, speed);
-			glUniform1i(uniT, t);
-			// Draw the mesh
-			mesh->draw();
-			break; }
-		}
+	//	
+
+	//	switch (viewmode) {
+	//	case 0:
+	//		glBindVertexArray(vao);
+	//		// Send transformation matrix to shader
+	//		glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
+	//		glUniform1i(uniFlip, flip);
+	//		glUniform1f(uniSpeed, speed);
+	//		glUniform1i(uniT, t);
+	//		// Draw the triangle
+	//		glDrawArrays(GL_TRIANGLES, 0, vcount);
+	//		glBindVertexArray(0);
+	//		break;
+
+	//	case 1: {
+	//		// Load model on demand
+	//		if (!mesh) mesh = new Mesh("models/cow.obj");
+
+	//		// Scale and center mesh using bounding box
+	//		pair<vec3, vec3> meshBB = mesh->boundingBox();
+	//		mat4 fixBB = scale(mat4(), vec3(1.0f / length(meshBB.second - meshBB.first)));
+	//		fixBB = glm::translate(fixBB, -(meshBB.first + meshBB.second) / 2.0f);
+	//		// Concatenate all transformations and upload to shader
+	//		xform = xform * fixBB;
+	//		glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
+	//		glUniform1i(uniFlip, flip);
+	//		glUniform1f(uniSpeed, speed);
+	//		glUniform1i(uniT, t);
+	//		// Draw the mesh
+	//		mesh->draw();
+	//		break; }
+	//	}
 
 		// Revert context state
 		glUseProgram(0);
@@ -503,10 +690,10 @@ void display() {
 		// Display the back buffer
 		glutSwapBuffers();
 
-	} catch (const exception& e) {
+	/*} catch (const exception& e) {
 		cerr << "Fatal error: " << e.what() << endl;
 		glutLeaveMainLoop();
-	}
+	}*/
 }
 
 void reshape(GLint width, GLint height) {
@@ -573,59 +760,59 @@ void idle() {
 	//vector<vert> temp;
 
 	//int index;
-	for (int i = lastNewIndex; i < verts.size(); i++)
-	{
-		verts[i].lifetime--;
-		verts[i].curl = curlNoise(simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t, 
-											verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t, 
-											verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t), 
-									simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
-										verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
-										verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t),
-									simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
-										verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
-										verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t));
-		if (verts[i].lifetime < 0)
-		{
+	//for (int i = lastNewIndex; i < verts.size(); i++)
+	//{
+	//	verts[i].lifetime--;
+	//	verts[i].curl = curlNoise(simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t, 
+	//										verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t, 
+	//										verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t), 
+	//								simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
+	//									verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
+	//									verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t),
+	//								simplexNoise(verts[i].center.x + ((verts[i].color).x + 1.0f * (verts[i].curl).x) * -0.01f * t,
+	//									verts[i].center.y + ((verts[i].color).y + 1.0f * (verts[i].curl).y) * -0.01f * t,
+	//									verts[i].center.z + ((verts[i].color).z + 1.0f * (verts[i].curl).z) * -0.01f * t));
+	//	if (verts[i].lifetime < 0)
+	//	{
 
-			//index = i;
-			std::random_device rd;
-			std::mt19937 eng(rd());
-			std::uniform_real_distribution<> distr(0, 1);
-			float rand_lifetime = distr(eng);
-			float rand_center1 = distr(eng);
-			float rand_center2 = distr(eng);
-			float rand_center3 = distr(eng);
-			float rand_size = distr(eng);
-			float rand_rotation = PI * distr(eng);
-			float rand_color1 = distr(eng);
-			float rand_color2 = distr(eng);
-			float rand_color3 = distr(eng);
-			Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
-			vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
-			verts[i] = (rand_particle->particle2vert(curl))[0];
-			verts[i + 1] = (rand_particle->particle2vert(curl))[1];
-			verts[i + 2] = (rand_particle->particle2vert(curl))[2];
-			//temp.push_back((rand_particle->particle2vert())[0]);
-			//temp.push_back((rand_particle->particle2vert())[1]);
-			//temp.push_back((rand_particle->particle2vert())[2]);
-			lastNewIndex = i + 3;
-			if (lastNewIndex >= verts.size())
-			{
-				lastNewIndex = 0;
-			}
-			break;
-		}
+	//		//index = i;
+	//		std::random_device rd;
+	//		std::mt19937 eng(rd());
+	//		std::uniform_real_distribution<> distr(0, 1);
+	//		float rand_lifetime = distr(eng);
+	//		float rand_center1 = distr(eng);
+	//		float rand_center2 = distr(eng);
+	//		float rand_center3 = distr(eng);
+	//		float rand_size = distr(eng);
+	//		float rand_rotation = PI * distr(eng);
+	//		float rand_color1 = distr(eng);
+	//		float rand_color2 = distr(eng);
+	//		float rand_color3 = distr(eng);
+	//		Particle* rand_particle = new Particle(10000 * rand_lifetime, vec3(rand_center1, rand_center2, rand_center3), 1.0f * rand_size, rand_rotation, vec3(rand_color1, rand_color2, rand_color3));
+	//		vec3 curl = curlNoise(simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3), simplexNoise(rand_center1, rand_center2, rand_center3));
+	//		verts[i] = (rand_particle->particle2vert(curl))[0];
+	//		verts[i + 1] = (rand_particle->particle2vert(curl))[1];
+	//		verts[i + 2] = (rand_particle->particle2vert(curl))[2];
+	//		//temp.push_back((rand_particle->particle2vert())[0]);
+	//		//temp.push_back((rand_particle->particle2vert())[1]);
+	//		//temp.push_back((rand_particle->particle2vert())[2]);
+	//		lastNewIndex = i + 3;
+	//		if (lastNewIndex >= verts.size())
+	//		{
+	//			lastNewIndex = 0;
+	//		}
+	//		break;
+	//	}
 
-	}
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbuf);
-	glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), NULL, GL_STATIC_DRAW);
-	//glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
+	//}
+	//glBindVertexArray(vao);
+	//glBindBuffer(GL_ARRAY_BUFFER, vbuf);
+	//glBufferData(GL_ARRAY_BUFFER, vcount * sizeof(vert), NULL, GL_STATIC_DRAW);
+	////glBufferSubData(GL_ARRAY_BUFFER, 0, vcount * sizeof(vert), verts.data());
 
 
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	speed += 0.0001f;
 	t += 1;

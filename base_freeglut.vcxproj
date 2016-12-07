@@ -173,6 +173,9 @@
     <ClInclude Include="util.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="render_f.glsl" />
+    <None Include="render_g.glsl" />
+    <None Include="render_v.glsl" />
     <None Include="sh_f.glsl" />
     <None Include="sh_g.glsl" />
     <None Include="sh_v.glsl" />

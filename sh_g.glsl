@@ -55,11 +55,11 @@ void main()
 
 	vCenterOut = vCenterPass[0];
 	vVelocityOut = vVelocityPass[0]; 
-	if(iTypePass[0] != 0)vPositionOut += vVelocityOut*fTimePassed; 
+	if(iTypePass[0] != 0)vCenterOut += vVelocityOut*fTimePassed; 
 	if(iTypePass[0] != 0)vVelocityOut += vGenCurlVector*fTimePassed; 
 
 	vColorOut = vColorPass[0]; 
-	fLifeTimeOut = fLifeTimePass[0]-fTimePassed; 
+	fLifetimeOut = fLifetimePass[0]-fTimePassed; 
 	fSizeOut = fSizePass[0]; 
 	iTypeOut = iTypePass[0]; 
 
@@ -73,14 +73,14 @@ void main()
 			vCenterOut = vGenPosition; 
 			vVelocityOut = vGenVelocityMin+vec3(vGenVelocityRange.x*randZeroOne(), vGenVelocityRange.y*randZeroOne(), vGenVelocityRange.z*randZeroOne()); 
 			vColorOut = vGenColor; 
-			fLifeTimeOut = fGenLifeMin+fGenLifeRange*randZeroOne(); 
+			fLifetimeOut = fGenLifeMin+fGenLifeRange*randZeroOne(); 
 			fSizeOut = fGenSize; 
 			iTypeOut = 1; 
 			EmitVertex(); 
 			EndPrimitive(); 
 		} 
 	} 
-	else if(fLifeTimeOut > 0.0) 
+	else if(fLifetimeOut > 0.0) 
 	{ 
 		EmitVertex(); 
 		EndPrimitive();  

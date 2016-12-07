@@ -61,5 +61,14 @@
     <None Include="sh_g.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="render_f.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="render_g.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="render_v.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
