@@ -1,7 +1,7 @@
 #version 330
 
 layout(points) in;
-layout(points, max_vertices = 40) out;
+layout(points, max_vertices = 60) out;
 
 // input from vertex shader
 in vec3 vCenterPass[];
@@ -72,7 +72,8 @@ void main()
 		{ 
 			vCenterOut = vGenPosition; 
 			vVelocityOut = vGenVelocityMin+vec3(vGenVelocityRange.x*randZeroOne(), vGenVelocityRange.y*randZeroOne(), vGenVelocityRange.z*randZeroOne()); 
-			vColorOut = vGenColor; 
+			vColorOut = vGenColor;
+			vCurlOut = vGenCurlVector; 
 			fLifetimeOut = fGenLifeMin+fGenLifeRange*randZeroOne(); 
 			fSizeOut = fGenSize; 
 			iTypeOut = 1; 

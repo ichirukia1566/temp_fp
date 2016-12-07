@@ -1,4 +1,5 @@
-﻿  gl_core_3_3.c
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppClean.targets(76,5): warning : The process cannot access the file 'w:\cs.data\temp_fp\x64\release\base_freeglut.ipdb' because it is being used by another process.
+  gl_core_3_3.c
   main.cpp
 main.cpp(133): warning C4305: 'initializing': truncation from 'double' to 'float'
 main.cpp(138): warning C4305: 'initializing': truncation from 'double' to 'float'

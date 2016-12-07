@@ -54,17 +54,17 @@ GLuint unifGenLifeRange;
 GLuint unifGenSize;
 GLuint uniiNumToGenerate;
 float fElapsedTime = 0.8f;
-float fNextGenerationTime = 0.02f;
+float fNextGenerationTime = 0.002f;
 
 vec3 vGenPosition = vec3(-10.0f, 17.5f, 0.0f);
 vec3 vGenVelocityMin = vec3(-5.0f, 0.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
 vec3 vGenCurlVector = vec3(0.0f, -5.0f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
-float fGenLifeMin = 1.5f, fGenLifeRange = 1.5f;
+float fGenLifeMin = 1.5f, fGenLifeRange = 10000.0f;
 float fGenSize = 0.75f;
 
-int iNumToGenerate = 30;
+int iNumToGenerate = 60;
 mat4 matProjection, matView;
 vec3 vQuad1, vQuad2;
 
@@ -358,7 +358,7 @@ void initOpenGL() {
 		"vVelocityOut",
 		"vCurlOut",
 		"fSizeOut",
-		"fLifeTimeOut",
+		"fLifetimeOut",
 		"iTypeOut",
 	};
 
@@ -404,8 +404,10 @@ void initOpenGL() {
 	glGenVertexArrays(2, uiVAO);
 
 	Particle partInitialization(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	Particle partInitialization1(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
 	partInitialization.setType(0);
 	verts.push_back(partInitialization.particle2vert(vec3(0.0f)));
+	verts.push_back(partInitialization1.particle2vert(vec3(0.0f)));
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -481,20 +483,22 @@ void updateParticles(float fTimePassed)
 	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, uiTransformFeedbackBuffer);
 
 	glBindVertexArray(uiVAO[iCurReadBuffer]);
-	glEnableVertexAttribArray(1); // Re-enable velocity
+	glEnableVertexAttribArray(2); // Re-enable velocity
 
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, uiParticleBuffer[1 - iCurReadBuffer]);
 
 	glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, uiQuery);
 	glBeginTransformFeedback(GL_POINTS);
-
+	
 	glDrawArrays(GL_POINTS, 0, iNumParticles);
 
 	glEndTransformFeedback();
 
 	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
-
+	cout << iNumParticles << endl;
+	//void * data = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(vert) * 1000000, GL_MAP_READ_BIT);
+	//cout << data;
 	iCurReadBuffer = 1 - iCurReadBuffer;
 
 	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
@@ -628,7 +632,7 @@ void display() {
 	vQuad1 = normalize(vQuad1);
 	vQuad2 = cross(vView, vQuad1);
 	vQuad2 = normalize(vQuad2);
-	updateParticles(1.0f);
+	updateParticles(0.02f);
 	renderParticles();
 
 
