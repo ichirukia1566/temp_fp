@@ -37,6 +37,13 @@ vec3 vLocalSeed;
 
 uniform int iNumToGenerate; // How many particles will be generated next time, if greater than zero, particles are generated
 
+uniform int p[256];
+//uniform int perm[512];
+layout (std140) uniform perm {
+  int myArray[512]; // This is the important name (in the shader).
+};
+uniform int grad3[36];
+
 // This function returns random number from zero to one
 float randZeroOne() 
 { 
@@ -60,6 +67,7 @@ int fastfloor(float x)
 //}
 float simplexNoise(float x, float y, float z)
 {
+/*
 	int grad3[36] = int[](1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1 , 0,
 					1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1,
 					0, 1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1);
@@ -78,7 +86,7 @@ float simplexNoise(float x, float y, float z)
 					138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180 );
 	int perm[512];
 	for (int i = 0; i < 512; ++i) 
-		perm[i] = p[i & 255];
+		perm[i] = p[i & 255];*/
 
 	float n0, n1, n2, n3; // Noise contributions from the four corners
 						   // Skew the input space to determine which simplex cell we're in
@@ -129,10 +137,10 @@ float simplexNoise(float x, float y, float z)
 	int ii = i & 255;
 	int jj = j & 255;
 	int kk = k & 255;
-	int gi0 = int(mod(perm[ii + perm[jj + perm[kk]]], 12));
-	int gi1 = int(mod(perm[ii + i1 + perm[jj + j1 + perm[kk + k1]]], 12));
-	int gi2 = int(mod(perm[ii + i2 + perm[jj + j2 + perm[kk + k2]]], 12));
-	int gi3 = int(mod(perm[ii + 1 + perm[jj + 1 + perm[kk + 1]]], 12));
+	int gi0 = int(mod(myArray[ii + myArray[jj + myArray[kk]]], 12));
+	int gi1 = int(mod(myArray[ii + i1 + myArray[jj + j1 + myArray[kk + k1]]], 12));
+	int gi2 = int(mod(myArray[ii + i2 + myArray[jj + j2 + myArray[kk + k2]]], 12));
+	int gi3 = int(mod(myArray[ii + 1 + myArray[jj + 1 + myArray[kk + 1]]], 12));
 	// Calculate the contribution from the four corners
 	float t0 = 0.6f - x0*x0 - y0*y0 - z0*z0;
 	if (t0<0) n0 = 0.0f;
@@ -206,10 +214,10 @@ void main()
 
 	vCenterOut = vCenterPass[0];
 	vVelocityOut = vVelocityPass[0]; 
-	//vCurlOut = curlNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z);
-	vec3 temp = vec3(simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z));
+	vCurlOut = curlNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z);
+	//vec3 temp = vec3(simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z));
 	if(iTypePass[0] != 0)vCenterOut += vVelocityOut*fTimePassed; 
-	if(iTypePass[0] != 0)vVelocityOut += temp*fTimePassed; 
+	if(iTypePass[0] != 0)vVelocityOut += vCurlOut*fTimePassed; 
 	
 	vColorOut = vColorPass[0]; 
 	fLifetimeOut = fLifetimePass[0]-fTimePassed; 

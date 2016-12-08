@@ -53,16 +53,20 @@ GLuint unifGenLifeMin;
 GLuint unifGenLifeRange;
 GLuint unifGenSize;
 GLuint uniiNumToGenerate;
+GLuint uniP;
+GLuint uniPerm;
+GLuint uniGrad3;
+GLuint testUBO;
 float fElapsedTime = 0.8f;
 float fNextGenerationTime = 0.02f;
 
 vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
-vec3 vGenVelocityMin = vec3(-0.5f, 0.0f, -0.5f), vGenVelocityRange = vec3(1.0f, 2.0f, 1.0f);
+vec3 vGenVelocityMin = vec3(-0.5f, 0.0f, -0.5f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
 vec3 vGenCurlVector = vec3(0.0f, -0.5f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
 float fGenLifeMin = 1.5f, fGenLifeRange = 100.0f;
-float fGenSize = 0.25f;
+float fGenSize = 0.05f;
 
 int iNumToGenerate = 60;
 mat4 matProjection, matView;
@@ -102,6 +106,9 @@ int grad4[32][4] = { { 0,1,1,1 },{ 0,1,1,-1 },{ 0,1,-1,1 },{ 0,1,-1,-1 },
 				{ -1,1,0,1 },{ -1,1,0,-1 },{ -1,-1,0,1 },{ -1,-1,0,-1 },
 				{ 1,1,1,0 },{ 1,1,-1,0 },{ 1,-1,1,0 },{ 1,-1,-1,0 },
 				{ -1,1,1,0 },{ -1,1,-1,0 },{ -1,-1,1,0 },{ -1,-1,-1,0 } };
+int grad3_1D[36] = { 1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1 , 0,
+				1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1,
+				0, 1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1 };
 
 int p[] = { 151,160,137,91,90,15,
 131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
@@ -466,6 +473,22 @@ void updateParticles(float fTimePassed)
 	glUniform1fv(unifGenSize, 1, &fGenSize);
 	uniiNumToGenerate = glGetUniformLocation(program_update, "iNumToGenerate");
 	glUniform1i(uniiNumToGenerate, 0);
+	uniP = glGetUniformLocation(program_update, "p");
+	glUniform1iv(uniP, 256, p);
+	//uniPerm = glGetUniformLocation(program_update, "perm");
+	//glUniform1iv(uniPerm, 512, p);
+	uniGrad3 = glGetUniformLocation(program_update, "grad3");
+	glUniform1iv(uniGrad3, 36, grad3_1D);
+
+	glGenBuffers(1, &testUBO);
+
+	// Allocate storage for the UBO
+	glBindBuffer(GL_UNIFORM_BUFFER, testUBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(GLint) * 512, perm, GL_DYNAMIC_DRAW);
+	GLuint myArrayBlockIdx = glGetUniformBlockIndex(program_update, "perm");
+
+	glUniformBlockBinding(program_update, myArrayBlockIdx, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, testUBO);
 	
 	fElapsedTime += fTimePassed;
 
@@ -639,7 +662,7 @@ void display() {
 	vQuad2 = normalize(vQuad2);
 	updateParticles(0.05f);
 	renderParticles();
-
+	glFlush();
 
 
 	//try {
@@ -822,7 +845,7 @@ void idle() {
 
 	//glBindVertexArray(0);
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	vGenPosition += vec3(cos(t), sin(t), 0.0f);
 	speed += 0.0001f;
 	t += 1;
 	
