@@ -26,7 +26,7 @@ particle.cpp(166): warning C4244: 'initializing': conversion from 'int' to 'floa
   util.cpp
 util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
   Generating code
-  All 824 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 846 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.exe
   base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.pdb (Full PDB)
