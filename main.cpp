@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include "gl_core_3_3.h"
 #include <GL/freeglut.h>
 #include "util.hpp"
@@ -65,12 +66,14 @@ vec3 vGenVelocityMin = vec3(-5.0f, -5.0f, -5.0f), vGenVelocityRange = vec3(10.0f
 vec3 vGenCurlVector = vec3(0.0f, 0.0f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
-float fGenLifeMin = 1.5f, fGenLifeRange = 1.5f;
+float fGenLifeMin = 0.1f, fGenLifeRange = 0.1f;
 float fGenSize = 0.05f;
 
 int iNumToGenerate = 68;
 mat4 matProjection, matView;
 vec3 vQuad1, vQuad2;
+
+vec3 vEye, vView = vec3(0.0f, 0.0f, 0.0f), vUp = vec3(0.0f, 1.0f, 0.0f);
 
 // Constants
 const int MENU_VIEWMODE = 0;		// Toggle view mode
@@ -531,7 +534,7 @@ void updateParticles(float fTimePassed)
 
 	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
-	//cout << iNumParticles << endl;
+	cout << iNumParticles << endl;
 	//vert feedback[sizeof(vert) * 100000];
 	//glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, sizeof(feedback), feedback);
 	//cout << "lol\n";
@@ -663,11 +666,6 @@ void display() {
 	//mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
 	matProjection = proj;
 	vec3 vEye = camCoords;
-	vec3 vView = vec3(0.0f, 0.0f, 0.0f);
-	vec3 vUp = vec3(0.0f, 1.0f, 0.0f);
-	//mat4 rot = rotate(mat4(), radians(camCoords.y), vec3(1.0, 0.0, 0.0));
-	//rot = rotate(rot, radians(camCoords.x), vec3(0.0, 1.0, 0.0));
-	//vUp = rot * vec4(vUp, 0.0f);
 	matView = lookAt(vEye, vView, vUp);
 	vView = vView - vEye;
 	vView = normalize(vView);
@@ -754,6 +752,36 @@ void keyRelease(unsigned char key, int x, int y) {
 	case 27:	// Escape key
 		menu(MENU_EXIT);
 		break;
+	case 'w':
+		camCoords = vec3(glm::rotateX(vec4(camCoords, 1.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 's':
+		camCoords = vec3(glm::rotateX(vec4(camCoords, 1.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 'a':
+		camCoords = vec3(glm::rotateY(vec4(camCoords, 1.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 'd':
+		camCoords = vec3(glm::rotateY(vec4(camCoords, 1.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 'q':
+		camCoords = vec3(glm::rotateZ(vec4(camCoords, 1.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 'e':
+		camCoords = vec3(glm::rotateZ(vec4(camCoords, 1.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		glutPostRedisplay();
+		break;
 	}
 }
 
@@ -769,29 +797,35 @@ void mouseBtn(int button, int state, int x, int y) {
 		camRot = false;
 	}
 	if (button == 3) {
-		camCoords.z = clamp(camCoords.z - 0.1f, 0.1f, 10.0f);
+		camCoords = 0.9f * camCoords;
 		glutPostRedisplay();
 	}
 	if (button == 4) {
-		camCoords.z = clamp(camCoords.z + 0.1f, 0.1f, 10.0f);
+		camCoords = (10.0f / 9.0f) * camCoords;
 		glutPostRedisplay();
 	}
 }
 
 void mouseMove(int x, int y) {
 	if (camRot) {
-		// Convert mouse delta into degrees, add to rotation
-		float rotScale = min(width / 450.0f, height / 270.0f);
-		vec2 mouseDelta = vec2(x, y) - mouseOrigin;
-		vec2 newAngle = camOrigin + mouseDelta / rotScale;
-		newAngle.y = clamp(newAngle.y, -90.0f, 90.0f);
-		while (newAngle.x > 180.0f) newAngle.x -= 360.0f;
-		while (newAngle.y < -180.0f) newAngle.y += 360.0f;
-		if (length(newAngle - vec2(camCoords)) > FLT_EPSILON) {
-			camCoords.x = newAngle.x;
-			camCoords.y = newAngle.y;
+		//cout << x << ", " << y << endl;
+		vec2 mouseDelta = vec2(((float)x - 0.5f * (float)width) / (0.5f * (float)width), -((float)y - 0.5f * (float)height) / (0.5f * (float)height));
+		vec4 temp = inverse(matProjection * matView) * vec4(mouseDelta, 0.0f, 1.0f);
+		temp = 10.0f * temp / temp.w;
+		vGenPosition = vec3(temp.x, temp.y, 0.0f);
+
+		//// Convert mouse delta into degrees, add to rotation
+		//float rotScale = min(width / 450.0f, height / 270.0f);
+		//vec2 mouseDelta = vec2(x, y) - mouseOrigin;
+		//vec2 newAngle = camOrigin + mouseDelta / rotScale;
+		//newAngle.y = clamp(newAngle.y, -90.0f, 90.0f);
+		//while (newAngle.x > 180.0f) newAngle.x -= 360.0f;
+		//while (newAngle.y < -180.0f) newAngle.y += 360.0f;
+		//if (length(newAngle - vec2(camCoords)) > FLT_EPSILON) {
+		//	camCoords.x = newAngle.x;
+		//	camCoords.y = newAngle.y;
 			glutPostRedisplay();
-		}
+		//}
 	}
 }
 
@@ -805,7 +839,7 @@ void idle() {
 		flip = 0;
 	}
 	
-	vGenPosition += vec3(1.0f * cos(t), 1.0f * sin(t), 0.0f);
+	//vGenPosition += vec3(1.0f * cos(t), 1.0f * sin(t), 0.0f);
 	speed += 0.0001f;
 	t += 1;
 	

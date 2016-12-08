@@ -223,9 +223,9 @@ void main()
 	fLifetimeOut = fLifetimePass[0]-fTimePassed; 
 	fSizeOut = fSizePass[0]; 
 	iTypeOut = iTypePass[0]; 
-	//float randVarMutant = randZeroOne();
+	float randVarMutant = randZeroOne();
 	/*
-	if (randVarMutant >= 0.8f)
+	if (randVarMutant >= 0.001f)
 	{
 		iTypeOut = iTypePass[0]; 
 	}
