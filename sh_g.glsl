@@ -206,9 +206,10 @@ void main()
 
 	vCenterOut = vCenterPass[0];
 	vVelocityOut = vVelocityPass[0]; 
-	vCurlOut = curlNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z);
+	//vCurlOut = curlNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z);
+	vec3 temp = vec3(simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z));
 	if(iTypePass[0] != 0)vCenterOut += vVelocityOut*fTimePassed; 
-	if(iTypePass[0] != 0)vVelocityOut += vGenCurlVector*fTimePassed; 
+	if(iTypePass[0] != 0)vVelocityOut += temp*fTimePassed; 
 	
 	vColorOut = vColorPass[0]; 
 	fLifetimeOut = fLifetimePass[0]-fTimePassed; 

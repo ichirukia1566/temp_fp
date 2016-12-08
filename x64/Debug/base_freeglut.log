@@ -1,11 +1,30 @@
 ﻿  gl_core_3_3.c
   util.cpp
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+w:\cs.data\temp_fp\util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
+  particle.cpp
+w:\cs.data\temp_fp\particle.cpp(166): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+w:\cs.data\temp_fp\particle.cpp(166): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+  Noise.cpp
   mesh.cpp
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+w:\cs.data\temp_fp\mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+w:\cs.data\temp_fp\mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+w:\cs.data\temp_fp\mesh.cpp(154): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   main.cpp
-c:\users\zhe jiang\documents\courses\cs535_cg\temp_fp\main.cpp(160): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
+w:\cs.data\temp_fp\main.cpp(133): warning C4305: 'initializing': truncation from 'double' to 'float'
+w:\cs.data\temp_fp\main.cpp(138): warning C4305: 'initializing': truncation from 'double' to 'float'
+w:\cs.data\temp_fp\main.cpp(170): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(171): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(172): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(173): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(174): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(175): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(185): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(191): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(197): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(203): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(211): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(217): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+w:\cs.data\temp_fp\main.cpp(218): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   Generating Code...
-  base_freeglut.vcxproj -> C:\Users\Zhe Jiang\Documents\Courses\CS535_CG\temp_fp\x64\Debug\base_freeglut.exe
+  base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Debug\base_freeglut.exe
+  base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Debug\base_freeglut.pdb (Full PDB)
