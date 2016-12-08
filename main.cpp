@@ -54,14 +54,14 @@ GLuint unifGenLifeRange;
 GLuint unifGenSize;
 GLuint uniiNumToGenerate;
 float fElapsedTime = 0.8f;
-float fNextGenerationTime = 0.002f;
+float fNextGenerationTime = 0.02f;
 
 vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
-vec3 vGenVelocityMin = vec3(-5.0f, 0.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
-vec3 vGenCurlVector = vec3(0.0f, -5.0f, 0.0f);
+vec3 vGenVelocityMin = vec3(-0.5f, 0.0f, -0.5f), vGenVelocityRange = vec3(1.0f, 2.0f, 1.0f);
+vec3 vGenCurlVector = vec3(0.0f, -0.5f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
-float fGenLifeMin = 1.5f, fGenLifeRange = 10000.0f;
+float fGenLifeMin = 1.5f, fGenLifeRange = 100.0f;
 float fGenSize = 0.25f;
 
 int iNumToGenerate = 60;
@@ -637,7 +637,7 @@ void display() {
 	vQuad1 = normalize(vQuad1);
 	vQuad2 = cross(vView, vQuad1);
 	vQuad2 = normalize(vQuad2);
-	updateParticles(0.02f);
+	updateParticles(0.05f);
 	renderParticles();
 
 
