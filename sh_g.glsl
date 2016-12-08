@@ -1,7 +1,7 @@
 #version 330
 
 layout(points) in;
-layout(points, max_vertices = 60) out;
+layout(points, max_vertices = 68) out;
 
 // input from vertex shader
 in vec3 vCenterPass[];
@@ -216,14 +216,24 @@ void main()
 	vVelocityOut = vVelocityPass[0]; 
 	vCurlOut = curlNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z);
 	//vec3 temp = vec3(simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z));
-	if(iTypePass[0] != 0)vCenterOut += vVelocityOut*fTimePassed; 
-	if(iTypePass[0] != 0)vVelocityOut += vCurlOut*fTimePassed; 
+	if(iTypePass[0] != 0)vCenterOut += (vVelocityOut + 0.01f * vCurlOut)*fTimePassed; 
+	if(iTypePass[0] != 0)vVelocityOut += 0.01f * vCurlOut; 
 	
 	vColorOut = vColorPass[0]; 
 	fLifetimeOut = fLifetimePass[0]-fTimePassed; 
 	fSizeOut = fSizePass[0]; 
 	iTypeOut = iTypePass[0]; 
-
+	//float randVarMutant = randZeroOne();
+	/*
+	if (randVarMutant >= 0.8f)
+	{
+		iTypeOut = iTypePass[0]; 
+	}
+	else
+	{
+		iTypeOut = 1 - iTypePass[0]; 
+	}
+	*/
 	if(iTypeOut == 0) 
 	{ 
 		EmitVertex(); 

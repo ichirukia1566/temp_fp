@@ -58,17 +58,17 @@ GLuint uniPerm;
 GLuint uniGrad3;
 GLuint testUBO;
 float fElapsedTime = 0.8f;
-float fNextGenerationTime = 0.02f;
+float fNextGenerationTime = 0.002f;
 
 vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
-vec3 vGenVelocityMin = vec3(-0.5f, 0.0f, -0.5f), vGenVelocityRange = vec3(10.0f, 20.0f, 10.0f);
-vec3 vGenCurlVector = vec3(0.0f, -0.5f, 0.0f);
+vec3 vGenVelocityMin = vec3(-5.0f, -5.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 10.0f, 10.0f);
+vec3 vGenCurlVector = vec3(0.0f, 0.0f, 0.0f);
 vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
 
-float fGenLifeMin = 1.5f, fGenLifeRange = 100.0f;
+float fGenLifeMin = 1.5f, fGenLifeRange = 1.5f;
 float fGenSize = 0.05f;
 
-int iNumToGenerate = 60;
+int iNumToGenerate = 68;
 mat4 matProjection, matView;
 vec3 vQuad1, vQuad2;
 
@@ -326,7 +326,7 @@ void initState() {
 	flip = 0;
 	speed = 0.0f;
 	lastNewIndex = 0;
-	camCoords = vec3(0.0, 0.0, 20.0);
+	camCoords = vec3(0.0, 0.0, 10.0);
 	camRot = false;
 }
 
@@ -411,10 +411,21 @@ void initOpenGL() {
 	glGenVertexArrays(2, uiVAO);
 
 	Particle partInitialization(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
-	//Particle partInitialization1(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	Particle partInitialization1(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	Particle partInitialization2(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	Particle partInitialization3(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+	Particle partInitialization4(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
 	partInitialization.setType(0);
 	verts.push_back(partInitialization.particle2vert(vec3(0.0f)));
-	//verts.push_back(partInitialization1.particle2vert(vec3(0.0f)));
+	verts.push_back(partInitialization1.particle2vert(vec3(0.0f)));
+	verts.push_back(partInitialization2.particle2vert(vec3(0.0f)));
+	verts.push_back(partInitialization3.particle2vert(vec3(0.0f)));
+	verts.push_back(partInitialization4.particle2vert(vec3(0.0f)));
+	/*for (int i = 0; i < 1000; i++)
+	{
+		Particle part(1000000.0f, vec3(-10.0f, 17.5f, 0.0f), 0.1f, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.5f, 1.0f), 0);
+		verts.push_back(part.particle2vert(vec3(0.0f)));
+	}*/
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -646,6 +657,7 @@ void initTriangle() {
 }
 
 void display() {
+	glClear(GL_COLOR_BUFFER_BIT);
 	float aspect = (float)width / (float)height;
 	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
 	//mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
@@ -660,7 +672,7 @@ void display() {
 	vQuad1 = normalize(vQuad1);
 	vQuad2 = cross(vView, vQuad1);
 	vQuad2 = normalize(vQuad2);
-	updateParticles(0.05f);
+	updateParticles(0.001f);
 	renderParticles();
 	glFlush();
 
@@ -845,7 +857,7 @@ void idle() {
 
 	//glBindVertexArray(0);
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	vGenPosition += vec3(cos(t), sin(t), 0.0f);
+	vGenPosition += vec3(1.0f * cos(t), 1.0f * sin(t), 0.0f);
 	speed += 0.0001f;
 	t += 1;
 	

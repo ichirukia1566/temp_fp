@@ -1,5 +1,4 @@
-﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppClean.targets(76,5): warning : The process cannot access the file 'w:\cs.data\temp_fp\x64\release\main.obj' because it is being used by another process.
-  gl_core_3_3.c
+﻿  gl_core_3_3.c
   main.cpp
 main.cpp(140): warning C4305: 'initializing': truncation from 'double' to 'float'
 main.cpp(145): warning C4305: 'initializing': truncation from 'double' to 'float'
