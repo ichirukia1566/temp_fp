@@ -76,6 +76,7 @@ mat4 matProjection, matView;
 vec3 vQuad1, vQuad2;
 
 vec3 vEye, vView = vec3(0.0f, 0.0f, 0.0f), vUp = vec3(0.0f, 1.0f, 0.0f);
+float updateFrequency = 0.0001f;
 
 // Constants
 const int MENU_VIEWMODE = 0;		// Toggle view mode
@@ -93,6 +94,7 @@ void initTriangle();
 void display();
 void reshape(GLint width, GLint height);
 void keyRelease(unsigned char key, int x, int y);
+void specialKeyRelease(int key, int x, int y);
 void mouseBtn(int button, int state, int x, int y);
 void mouseMove(int x, int y);
 void idle();
@@ -358,6 +360,7 @@ void initGLUT(int* argc, char** argv) {
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutKeyboardUpFunc(keyRelease);
+	glutSpecialFunc(specialKeyRelease);
 	glutMouseFunc(mouseBtn);
 	glutMotionFunc(mouseMove);
 	glutIdleFunc(idle);
@@ -654,7 +657,7 @@ void display() {
 	vQuad1 = normalize(vQuad1);
 	vQuad2 = cross(vView, vQuad1);
 	vQuad2 = normalize(vQuad2);	
-	updateParticles(0.0001f);
+	updateParticles(updateFrequency);
 	renderParticles();
 	glFlush();
 
@@ -717,6 +720,32 @@ void keyRelease(unsigned char key, int x, int y) {
 		break;
 	case 'b':
 		blendFlag = !blendFlag;
+		glutPostRedisplay();
+		break;
+	}
+}
+
+void specialKeyRelease(int key, int x, int y)
+{
+	switch (key)
+	{
+	case GLUT_KEY_UP:
+		fGenSize += 0.05f;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_DOWN:
+		if (fGenSize >= 0.06f)
+			fGenSize -= 0.05f;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_LEFT:
+		updateFrequency *= 0.5f;
+		fNextGenerationTime *= 0.5f;
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_RIGHT:
+		updateFrequency *= 2.0f;
+		fNextGenerationTime *= 2.0f;
 		glutPostRedisplay();
 		break;
 	}

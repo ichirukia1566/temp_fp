@@ -1,21 +1,20 @@
-﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppClean.targets(76,5): warning : The process cannot access the file 'w:\cs.data\temp_fp\x64\release\base_freeglut.pdb' because it is being used by another process.
-  gl_core_3_3.c
+﻿  gl_core_3_3.c
   main.cpp
-main.cpp(145): warning C4305: 'initializing': truncation from 'double' to 'float'
-main.cpp(150): warning C4305: 'initializing': truncation from 'double' to 'float'
-main.cpp(182): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(183): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(147): warning C4305: 'initializing': truncation from 'double' to 'float'
+main.cpp(152): warning C4305: 'initializing': truncation from 'double' to 'float'
 main.cpp(184): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(185): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(186): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 main.cpp(187): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(197): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(203): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(209): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(215): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-main.cpp(223): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-main.cpp(229): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-main.cpp(230): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+main.cpp(188): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(189): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(199): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(205): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(211): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(217): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(225): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+main.cpp(231): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+main.cpp(232): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   mesh.cpp
 mesh.cpp(119): warning C4267: '=': conversion from 'size_t' to 'GLsizei', possible loss of data
 mesh.cpp(151): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
@@ -27,7 +26,7 @@ particle.cpp(88): warning C4244: 'initializing': conversion from 'int' to 'float
   util.cpp
 util.cpp(20): warning C4267: 'initializing': conversion from 'size_t' to 'GLint', possible loss of data
   Generating code
-  All 844 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 845 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.exe
   base_freeglut.vcxproj -> W:\cs.data\temp_fp\x64\Release\base_freeglut.pdb (Full PDB)
