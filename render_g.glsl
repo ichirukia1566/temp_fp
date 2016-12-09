@@ -31,7 +31,7 @@ void main()
         
 	if (flip == 1)
 	{
-		 vec3 vPos = vPosOld+vQuad2*fSize*sqrt(3)/3.0f; 
+		vec3 vPos = vPosOld+vQuad2*fSize*sqrt(3)/3.0f; 
 		//vTexCoord = vec2(0.0, 0.0); 
 		gl_Position = mVP*vec4(vPos, 1.0); 
 		EmitVertex(); 

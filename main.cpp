@@ -34,6 +34,8 @@ vec2 camOrigin;			// Original camera coordinates upon clicking
 vec2 mouseOrigin;		// Original mouse coordinates upon clicking
 
 int flip; // the variable that determines which triangle of the "new particle" is rendered
+int staticFlag;
+int blendFlag;
 float speed;
 int t; // time
 vector<vert> verts;
@@ -59,15 +61,15 @@ GLuint uniPerm;
 GLuint uniGrad3;
 GLuint testUBO;
 float fElapsedTime = 0.8f;
-float fNextGenerationTime = 0.002f;
+float fNextGenerationTime = 0.0002f;
 
 vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
 vec3 vGenVelocityMin = vec3(-5.0f, -5.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 10.0f, 10.0f);
 vec3 vGenCurlVector = vec3(0.0f, 0.0f, 0.0f);
-vec3 vGenColor = vec3(1.0f, 0.5f, 0.0f);
+vec3 vGenColor = vec3(0.5f, 0.5f, 0.5f);
 
 float fGenLifeMin = 0.1f, fGenLifeRange = 0.1f;
-float fGenSize = 0.05f;
+float fGenSize = 0.01f;
 
 int iNumToGenerate = 68;
 mat4 matProjection, matView;
@@ -329,6 +331,8 @@ void initState() {
 	flip = 0;
 	speed = 0.0f;
 	lastNewIndex = 0;
+	staticFlag = 0;
+	blendFlag = 1;
 	camCoords = vec3(0.0, 0.0, 5.0);
 	camRot = false;
 }
@@ -519,7 +523,7 @@ void updateParticles(float fTimePassed)
 
 	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
-	//cout << iNumParticles << endl;
+	cout << iNumParticles << endl;
 	iCurReadBuffer = 1 - iCurReadBuffer;
 }
 
@@ -527,6 +531,8 @@ void renderParticles()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	if (!blendFlag)
+		glDisable(GL_BLEND);
 	glDepthMask(0);
 
 	glDisable(GL_RASTERIZER_DISCARD);
@@ -635,7 +641,8 @@ void initTriangle() {
 }
 
 void display() {
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (!staticFlag)
+		glClear(GL_COLOR_BUFFER_BIT);
 	float aspect = (float)width / (float)height;
 	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
 	matProjection = proj;
@@ -647,7 +654,7 @@ void display() {
 	vQuad1 = normalize(vQuad1);
 	vQuad2 = cross(vView, vQuad1);
 	vQuad2 = normalize(vQuad2);	
-	updateParticles(0.001f);
+	updateParticles(0.0001f);
 	renderParticles();
 	glFlush();
 
@@ -671,32 +678,45 @@ void keyRelease(unsigned char key, int x, int y) {
 		break;
 	case 'w':
 		camCoords = vec3(glm::rotateX(vec4(camCoords, 1.0f), -0.01f * (float)PI));
-		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), -0.04f * (float)PI));
 		glutPostRedisplay();
 		break;
 	case 's':
 		camCoords = vec3(glm::rotateX(vec4(camCoords, 1.0f), 0.01f * (float)PI));
-		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateX(vec4(vUp, 0.0f), 0.04f * (float)PI));
 		glutPostRedisplay();
 		break;
 	case 'a':
 		camCoords = vec3(glm::rotateY(vec4(camCoords, 1.0f), -0.01f * (float)PI));
-		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), -0.04f * (float)PI));
 		glutPostRedisplay();
 		break;
 	case 'd':
 		camCoords = vec3(glm::rotateY(vec4(camCoords, 1.0f), 0.01f * (float)PI));
-		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateY(vec4(vUp, 0.0f), 0.04f * (float)PI));
 		glutPostRedisplay();
 		break;
 	case 'q':
 		camCoords = vec3(glm::rotateZ(vec4(camCoords, 1.0f), 0.01f * (float)PI));
-		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), 0.01f * (float)PI));
+		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), 0.04f * (float)PI));
 		glutPostRedisplay();
 		break;
 	case 'e':
 		camCoords = vec3(glm::rotateZ(vec4(camCoords, 1.0f), -0.01f * (float)PI));
-		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), -0.01f * (float)PI));
+		vUp = vec3(glm::rotateZ(vec4(vUp, 0.0f), -0.04f * (float)PI));
+		glutPostRedisplay();
+		break;
+	case 'r':
+		camCoords = vec3(0.0f, 0.0f, 10.0f);
+		vUp = vec3(0.0f, 1.0f, 0.0f);
+		glutPostRedisplay();
+		break;
+	case 'f':
+		staticFlag = !staticFlag;
+		glutPostRedisplay();
+		break;
+	case 'b':
+		blendFlag = !blendFlag;
 		glutPostRedisplay();
 		break;
 	}

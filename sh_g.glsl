@@ -197,8 +197,16 @@ void main()
 	//vec3 temp = vec3(simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z), simplexNoise(vCenterOut.x, vCenterOut.y, vCenterOut.z));
 	if(iTypePass[0] != 0)vCenterOut += (vVelocityOut + 0.1f * vCurlOut)*fTimePassed; 
 	if(iTypePass[0] != 0)vVelocityOut += 0.1f * vCurlOut; 
+	float rand_1 = randZeroOne();
+	if(rand_1 > 0.5f)
+	{
+		vColorOut = vec3(clamp(vColorPass[0].x + 0.01f, 0.0f, 1.0f), clamp(vColorPass[0].y + 0.015f, 0.0f, 1.0f), clamp(vColorPass[0].z + 0.005f, 0.0f, 1.0f));
+	}
+	else
+	{
+		vColorOut = vec3(clamp(vColorPass[0].x - 0.01f, 0.0f, 1.0f), clamp(vColorPass[0].y - 0.015f, 0.0f, 1.0f), clamp(vColorPass[0].z - 0.005f, 0.0f, 1.0f));
+	}
 	
-	vColorOut = vec3(clamp(vColorPass[0].x + 0.05f, 0.0f, 1.0f), clamp(vColorPass[0].y + 0.05f, 0.0f, 1.0f), clamp(vColorPass[0].z + 0.05f, 0.0f, 1.0f));
 	fLifetimeOut = fLifetimePass[0]-fTimePassed; 
 	fSizeOut = fSizePass[0]; 
 	iTypeOut = iTypePass[0]; 
