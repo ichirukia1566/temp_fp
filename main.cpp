@@ -64,7 +64,7 @@ float fNextGenerationTime = 0.002f;
 vec3 vGenPosition = vec3(0.0f, 0.0f, 0.0f);
 vec3 vGenVelocityMin = vec3(-5.0f, -5.0f, -5.0f), vGenVelocityRange = vec3(10.0f, 10.0f, 10.0f);
 vec3 vGenCurlVector = vec3(0.0f, 0.0f, 0.0f);
-vec3 vGenColor = vec3(0.0f, 0.5f, 1.0f);
+vec3 vGenColor = vec3(1.0f, 0.5f, 0.0f);
 
 float fGenLifeMin = 0.1f, fGenLifeRange = 0.1f;
 float fGenSize = 0.05f;
@@ -372,11 +372,6 @@ void initOpenGL() {
 		"iTypeOut"
 	};
 
-	//// Set clear color and depth
-	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//glClearDepth(1.0f);
-	//// Enable depth testing
-	//glEnable(GL_DEPTH_TEST);
 
 	// Compile and link shader program
 	vector<GLuint> shaders;
@@ -387,8 +382,7 @@ void initOpenGL() {
 	// Attach the shaders and link the program
 	for (auto it = shaders.begin(); it != shaders.end(); ++it)
 		glAttachShader(program_update, *it);
-	//for (int i = 0; i < 7; i++) 
-		glTransformFeedbackVaryings(program_update, 7, sVaryings, GL_INTERLEAVED_ATTRIBS);
+	glTransformFeedbackVaryings(program_update, 7, sVaryings, GL_INTERLEAVED_ATTRIBS);
 	glLinkProgram(program_update);
 	// Release shader sources
 	for (auto s = shaders.begin(); s != shaders.end(); ++s)
@@ -403,7 +397,6 @@ void initOpenGL() {
 		glDeleteShader(*s);
 	shaders.clear();
 	
-	//glGenTransformFeedbacks(1, &uiTransformFeedbackBuffer);
 	glGenBuffers(1, &uiTBO);
 	glBindBuffer(GL_ARRAY_BUFFER, uiTBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vert) * 100000, nullptr, GL_STATIC_READ);
@@ -451,10 +444,6 @@ void initOpenGL() {
 	iCurReadBuffer = 0;
 	iNumParticles = 1;
 
-	//bInitialized = true;
-
-	//return true;
-
 }
 
 float grandf(float fMin, float fAdd)
@@ -489,8 +478,6 @@ void updateParticles(float fTimePassed)
 	glUniform1i(uniiNumToGenerate, 0);
 	uniP = glGetUniformLocation(program_update, "p");
 	glUniform1iv(uniP, 256, p);
-	//uniPerm = glGetUniformLocation(program_update, "perm");
-	//glUniform1iv(uniPerm, 512, p);
 	uniGrad3 = glGetUniformLocation(program_update, "grad3");
 	glUniform1iv(uniGrad3, 36, grad3_1D);
 
@@ -508,7 +495,6 @@ void updateParticles(float fTimePassed)
 
 	if(fElapsedTime > fNextGenerationTime)
 	{
-		//spUpdateParticles.SetUniform("iNumToGenerate", iNumToGenerate);
 		uniiNumToGenerate = glGetUniformLocation(program_update, "iNumToGenerate");
 		glUniform1i(uniiNumToGenerate, iNumToGenerate);
 		fElapsedTime -= fNextGenerationTime;
@@ -518,7 +504,6 @@ void updateParticles(float fTimePassed)
 	}
 
 	glEnable(GL_RASTERIZER_DISCARD);
-	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, uiTransformFeedbackBuffer);
 
 	glBindVertexArray(uiVAO[iCurReadBuffer]);
 	glEnableVertexAttribArray(2); // Re-enable velocity
@@ -534,16 +519,8 @@ void updateParticles(float fTimePassed)
 
 	glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 	glGetQueryObjectiv(uiQuery, GL_QUERY_RESULT, &iNumParticles);
-	cout << iNumParticles << endl;
-	//vert feedback[sizeof(vert) * 100000];
-	//glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, sizeof(feedback), feedback);
-	//cout << "lol\n";
-	//printf("%f\n", feedback[0].center);
-	//void * data = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(vert) * 1000000, GL_MAP_READ_BIT);
-	//cout << data;
+	//cout << iNumParticles << endl;
 	iCurReadBuffer = 1 - iCurReadBuffer;
-
-	//glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
 }
 
 void renderParticles()
@@ -563,8 +540,6 @@ void renderParticles()
 	glUniform1i(glGetUniformLocation(program_render, "flip"), flip);
 
 	glBindVertexArray(uiVAO[iCurReadBuffer]);
-	//void * data = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(vert) * 1000000, GL_MAP_READ_BIT);
-	//cout << data;
 	glDisableVertexAttribArray(2); // Disable velocity, because we don't need it for rendering
 
 	glDrawArrays(GL_POINTS, 0, iNumParticles);
@@ -663,7 +638,6 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	float aspect = (float)width / (float)height;
 	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
-	//mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
 	matProjection = proj;
 	vec3 vEye = camCoords;
 	matView = lookAt(vEye, vView, vUp);
@@ -677,68 +651,11 @@ void display() {
 	renderParticles();
 	glFlush();
 
+	// Revert context state
+	glUseProgram(0);
 
-	//try {
-	//	// Clear the back buffer
-	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	//	// Get ready to draw
-	//	glUseProgram(shader);
-
-	//	mat4 xform;
-	//	float aspect = (float)width / (float)height;
-	//	// Create perspective projection matrix
-	//	mat4 proj = perspective(45.0f, aspect, 0.1f, 100.0f);
-	//	// Create view transformation matrix
-	//	mat4 view = translate(mat4(), vec3(0.0, 0.0, -camCoords.z));
-	//	mat4 rot = rotate(mat4(), radians(camCoords.y), vec3(1.0, 0.0, 0.0));
-	//	rot = rotate(rot, radians(camCoords.x), vec3(0.0, 1.0, 0.0));
-	//	xform = proj * view * rot;
-
-	//	
-
-	//	switch (viewmode) {
-	//	case 0:
-	//		glBindVertexArray(vao);
-	//		// Send transformation matrix to shader
-	//		glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
-	//		glUniform1i(uniFlip, flip);
-	//		glUniform1f(uniSpeed, speed);
-	//		glUniform1i(uniT, t);
-	//		// Draw the triangle
-	//		glDrawArrays(GL_TRIANGLES, 0, vcount);
-	//		glBindVertexArray(0);
-	//		break;
-
-	//	case 1: {
-	//		// Load model on demand
-	//		if (!mesh) mesh = new Mesh("models/cow.obj");
-
-	//		// Scale and center mesh using bounding box
-	//		pair<vec3, vec3> meshBB = mesh->boundingBox();
-	//		mat4 fixBB = scale(mat4(), vec3(1.0f / length(meshBB.second - meshBB.first)));
-	//		fixBB = glm::translate(fixBB, -(meshBB.first + meshBB.second) / 2.0f);
-	//		// Concatenate all transformations and upload to shader
-	//		xform = xform * fixBB;
-	//		glUniformMatrix4fv(uniXform, 1, GL_FALSE, value_ptr(xform));
-	//		glUniform1i(uniFlip, flip);
-	//		glUniform1f(uniSpeed, speed);
-	//		glUniform1i(uniT, t);
-	//		// Draw the mesh
-	//		mesh->draw();
-	//		break; }
-	//	}
-
-		// Revert context state
-		glUseProgram(0);
-
-		// Display the back buffer
-		glutSwapBuffers();
-
-	/*} catch (const exception& e) {
-		cerr << "Fatal error: " << e.what() << endl;
-		glutLeaveMainLoop();
-	}*/
+	// Display the back buffer
+	glutSwapBuffers();
 }
 
 void reshape(GLint width, GLint height) {
@@ -808,24 +725,11 @@ void mouseBtn(int button, int state, int x, int y) {
 
 void mouseMove(int x, int y) {
 	if (camRot) {
-		//cout << x << ", " << y << endl;
 		vec2 mouseDelta = vec2(((float)x - 0.5f * (float)width) / (0.5f * (float)width), -((float)y - 0.5f * (float)height) / (0.5f * (float)height));
 		vec4 temp = inverse(matProjection * matView) * vec4(mouseDelta, 0.0f, 1.0f);
 		temp = 10.0f * temp / temp.w;
 		vGenPosition = vec3(temp.x, temp.y, 0.0f);
-
-		//// Convert mouse delta into degrees, add to rotation
-		//float rotScale = min(width / 450.0f, height / 270.0f);
-		//vec2 mouseDelta = vec2(x, y) - mouseOrigin;
-		//vec2 newAngle = camOrigin + mouseDelta / rotScale;
-		//newAngle.y = clamp(newAngle.y, -90.0f, 90.0f);
-		//while (newAngle.x > 180.0f) newAngle.x -= 360.0f;
-		//while (newAngle.y < -180.0f) newAngle.y += 360.0f;
-		//if (length(newAngle - vec2(camCoords)) > FLT_EPSILON) {
-		//	camCoords.x = newAngle.x;
-		//	camCoords.y = newAngle.y;
-			glutPostRedisplay();
-		//}
+		glutPostRedisplay();
 	}
 }
 
